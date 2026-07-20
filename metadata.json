@@ -1,0 +1,6 @@
+{
+  "name": "Flowbase",
+  "description": "One workspace. Every way you think. Flowbase combines notes, whiteboards, kanban boards, calendar planning, and AI assistance in one calm, modern workspace.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
