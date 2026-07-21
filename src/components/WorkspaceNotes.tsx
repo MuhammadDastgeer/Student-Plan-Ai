@@ -1676,7 +1676,7 @@ export default function WorkspaceNotes() {
                     <Sparkles className="w-8 h-8 text-[#FAF2EC] fill-current animate-pulse text-stone-300" />
                     <p className="font-sans font-bold text-stone-600 text-xs">What can I draft for you?</p>
                     <p className="text-[10px] text-stone-400 leading-relaxed max-w-[180px]">
-                      Ask questions, translate, or use the quick buttons above to edit the current note with Gemini AI.
+                      Ask questions, translate, or use the quick buttons above to edit the current note with OpenAI.
                     </p>
                   </div>
                 ) : (

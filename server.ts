@@ -1,21 +1,10 @@
 import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
-import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
 
 // Load environment variables
 dotenv.config();
-
-// Initialize the Google GenAI SDK
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY,
-  httpOptions: {
-    headers: {
-      "User-Agent": "aistudio-build",
-    },
-  },
-});
 
 async function startServer() {
   const app = express();
@@ -28,14 +17,6 @@ async function startServer() {
   app.post("/api/notes/ai", async (req, res) => {
     try {
       const { prompt, context, action, history, apiKey: clientApiKey } = req.body;
-
-      const apiKey = clientApiKey?.trim() || process.env.OPENAI_API_KEY?.trim();
-
-      if (!apiKey) {
-        return res.status(400).json({
-          error: "No OpenAI API key found. Please enter your OpenAI API Key or configure OPENAI_API_KEY on the server.",
-        });
-      }
 
       let systemInstruction = "You are a cozy, professional, and friendly AI writing assistant for Flowbase Notes. " +
         "You help users summarize, translate, polish, and brainstorm ideas based on their notes. " +
@@ -219,12 +200,20 @@ async function startServer() {
         }
       }
 
+      // OpenAI API Call
+      const apiKey = clientApiKey?.trim() || process.env.OPENAI_API_KEY?.trim();
+
+      if (!apiKey) {
+        return res.status(400).json({
+          error: "No OpenAI API key found. Please enter your OpenAI API Key or configure OPENAI_API_KEY on the server.",
+        });
+      }
+
       let messagesPayload: any[] = [
         { role: "system", content: systemInstruction }
       ];
 
       if (history && Array.isArray(history)) {
-        // Map history elements, limit to keep payload reasonably small (up to 200 items as requested)
         const mappedHistory = history.map((msg: any) => ({
           role: msg.sender === "user" ? "user" : "assistant",
           content: msg.text
@@ -263,9 +252,9 @@ async function startServer() {
       const responseText = data.choices?.[0]?.message?.content || "No response received from OpenAI.";
       res.json({ response: responseText });
     } catch (error: any) {
-      console.error("Error communicating with OpenAI API:", error);
+      console.error("Error communicating with AI API:", error);
       res.status(500).json({
-        error: error.message || "An error occurred while generating AI content via OpenAI.",
+        error: error.message || "An error occurred while generating AI content.",
       });
     }
   });
@@ -275,18 +264,10 @@ async function startServer() {
     res.json({ status: "ok" });
   });
 
-  // API Endpoint for OpenAI Template Generation
+  // API Endpoint for Template Generation
   app.post("/api/templates/generate", async (req, res) => {
     try {
       const { name, description, prompt, apiKey: clientApiKey } = req.body;
-
-      const apiKey = clientApiKey?.trim() || process.env.OPENAI_API_KEY?.trim();
-
-      if (!apiKey) {
-        return res.status(400).json({
-          error: "No OpenAI API key found. Please enter your OpenAI API Key in the UI field or configure OPENAI_API_KEY on the server.",
-        });
-      }
 
       const systemPrompt = `You are a professional AI UI and productivity systems designer.
 Your task is to take a template Name, Description, and Prompt, and output a structured JSON configuration for a custom micro-productivity template.
@@ -314,6 +295,15 @@ The JSON object must have this exact format:
 }
 
 Ensure the fields and checklist items are perfectly customized according to the requested Name, Description, and Prompt. Produce 3-5 highly relevant fields and 3-5 highly relevant checklist items. Make the labels clear, inspiring, and elegant.`;
+
+      // OpenAI API Call
+      const apiKey = clientApiKey?.trim() || process.env.OPENAI_API_KEY?.trim();
+
+      if (!apiKey) {
+        return res.status(400).json({
+          error: "No OpenAI API key found. Please enter your OpenAI API Key or configure OPENAI_API_KEY on the server.",
+        });
+      }
 
       const response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
@@ -353,25 +343,17 @@ Ensure the fields and checklist items are perfectly customized according to the 
       const parsedTemplate = JSON.parse(content);
       res.json({ template: parsedTemplate });
     } catch (error: any) {
-      console.error("Error generating template via OpenAI:", error);
+      console.error("Error generating template:", error);
       res.status(500).json({
         error: error.message || "An unexpected error occurred during template generation.",
       });
     }
   });
 
-  // API Endpoint for OpenAI Whiteboard Diagram Generation
+  // API Endpoint for Whiteboard Diagram Generation
   app.post("/api/diagrams/generate", async (req, res) => {
     try {
       const { prompt, apiKey: clientApiKey } = req.body;
-
-      const apiKey = clientApiKey?.trim() || process.env.OPENAI_API_KEY?.trim();
-
-      if (!apiKey) {
-        return res.status(400).json({
-          error: "No OpenAI API key found. Please enter your OpenAI API Key or configure OPENAI_API_KEY on the server.",
-        });
-      }
 
       const systemPrompt = `You are a professional software architect and dynamic diagram designer.
 Your task is to take a custom user prompt describing a flowchart, mindmap, architecture, sequence, or workflow, and output a structured JSON array representing diagram elements on a whiteboard.
@@ -437,6 +419,15 @@ The JSON object must have this exact format:
 
 Ensure all elements are beautifully spaced, layout flows logical (usually left-to-right or top-to-bottom), colors are professionally matched, and connectors perfectly link the shapes. Generate between 4 to 12 logical elements depending on the user prompt complexity. Keep all coordinates mathematically cohesive.`;
 
+      // OpenAI API Call
+      const apiKey = clientApiKey?.trim() || process.env.OPENAI_API_KEY?.trim();
+
+      if (!apiKey) {
+        return res.status(400).json({
+          error: "No OpenAI API key found. Please enter your OpenAI API Key or configure OPENAI_API_KEY on the server.",
+        });
+      }
+
       const response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -475,7 +466,7 @@ Ensure all elements are beautifully spaced, layout flows logical (usually left-t
       const parsedData = JSON.parse(content);
       res.json({ elements: parsedData.elements || [] });
     } catch (error: any) {
-      console.error("Error generating diagram via OpenAI:", error);
+      console.error("Error generating diagram:", error);
       res.status(500).json({
         error: error.message || "An unexpected error occurred during diagram generation.",
       });

@@ -29,7 +29,7 @@ export default function WorkspaceSettings() {
 
   // Additional mock values
   const [selectedPlan, setSelectedPlan] = useState("Pro tier Developer");
-  const [aiModel, setAiModel] = useState("Gemini 1.5 Flash (Default)");
+  const [aiModel, setAiModel] = useState("GPT-4o-mini (Default)");
   const [mfaEnabled, setMfaEnabled] = useState(true);
   const [privacyMode, setPrivacyMode] = useState(false);
 
@@ -257,8 +257,8 @@ export default function WorkspaceSettings() {
                     onChange={(e) => setAiModel(e.target.value)}
                     className="bg-stone-50 border border-[#EFECE6] rounded-lg px-3 py-2 text-xs text-stone-700 focus:outline-none w-full"
                   >
-                    <option>Gemini 1.5 Flash (Default)</option>
-                    <option>Gemini 1.5 Pro (Workspace Expert)</option>
+                    <option>GPT-4o-mini (Default)</option>
+                    <option>GPT-4o (Workspace Expert)</option>
                     <option>Flowbase Custom Agent</option>
                   </select>
                 </div>

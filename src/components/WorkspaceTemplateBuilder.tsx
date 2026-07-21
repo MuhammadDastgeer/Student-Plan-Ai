@@ -639,11 +639,11 @@ export default function WorkspaceTemplateBuilder() {
           <Lock className="w-3.5 h-3.5 text-stone-400 flex-shrink-0" />
           <input
             type="password"
-            placeholder="OpenAI API Key (or server key)"
+            placeholder="OpenAI Key (Leave blank to use Server key)"
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
             className="text-[11px] text-stone-700 bg-transparent border-none focus:outline-none w-48 font-mono"
-            title="Optional. If omitted, the server's OPENAI_API_KEY env variable will be used."
+            title="Optional. If omitted, the server's OPENAI_API_KEY env variable will be used automatically."
           />
           {apiKey ? (
             <span className="text-[9px] bg-green-50 text-green-700 border border-green-200 px-1.5 py-0.5 rounded-md font-bold uppercase whitespace-nowrap">Loaded</span>
