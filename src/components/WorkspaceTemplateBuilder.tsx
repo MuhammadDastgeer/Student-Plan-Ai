@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { callOpenAITemplateGenerate } from "../lib/openaiFallback";
 import { 
   Sparkles, 
   Wrench, 
@@ -125,26 +126,43 @@ export default function WorkspaceTemplateBuilder() {
     setBuildSuccess(false);
 
     try {
-      const response = await fetch("/api/templates/generate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      let generatedData: any = null;
+      try {
+        const response = await fetch("/api/templates/generate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: newName.trim(),
+            description: newDesc.trim() || "AI built custom workspace module.",
+            prompt: newPrompt.trim(),
+            apiKey: apiKey.trim() || undefined, // Send if entered in UI
+          }),
+        });
+
+        if (!response.ok) {
+          const errText = await response.text();
+          let serverError = "Failed to generate template.";
+          try {
+            const parsed = JSON.parse(errText);
+            serverError = parsed.error || serverError;
+          } catch (e) {}
+          throw new Error(serverError);
+        }
+
+        const data = await response.json();
+        generatedData = data.template;
+      } catch (err: any) {
+        console.warn("Backend API failed, trying direct OpenAI fallback:", err);
+        const directRes = await callOpenAITemplateGenerate({
           name: newName.trim(),
           description: newDesc.trim() || "AI built custom workspace module.",
           prompt: newPrompt.trim(),
-          apiKey: apiKey.trim() || undefined, // Send if entered in UI
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to generate template.");
+          apiKey: apiKey.trim() || undefined
+        });
+        generatedData = directRes.template;
       }
-
-      const generatedData = data.template;
 
       const newTmpl: AppletTemplate = {
         id: "tmpl-" + Math.random().toString(36).substr(2, 9),

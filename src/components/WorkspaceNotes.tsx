@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { callOpenAINotesAI } from "../lib/openaiFallback";
 import { 
   Plus, 
   Trash2, 
@@ -291,22 +292,43 @@ export default function WorkspaceNotes() {
         plainTextContext = tempDiv.textContent || tempDiv.innerText || "";
       }
 
-      const response = await fetch("/api/notes/ai", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      let aiResponseText = "";
+      try {
+        const clientApiKey = localStorage.getItem("openai_api_key") || "";
+        const response = await fetch("/api/notes/ai", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            prompt: inputToUse,
+            context: plainTextContext,
+            action: action,
+            apiKey: clientApiKey || undefined
+          }),
+        });
+
+        if (!response.ok) {
+          const errText = await response.text();
+          let serverError = "Server error";
+          try {
+            const parsed = JSON.parse(errText);
+            serverError = parsed.error || serverError;
+          } catch (e) {}
+          throw new Error(serverError);
+        }
+
+        const data = await response.json();
+        aiResponseText = data.response;
+      } catch (err: any) {
+        console.warn("Backend API failed, trying direct OpenAI fallback:", err);
+        const clientApiKey = localStorage.getItem("openai_api_key") || "";
+        const directRes = await callOpenAINotesAI({
           prompt: inputToUse,
           context: plainTextContext,
-          action: action
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to contact OpenAI API server");
+          action: action,
+          apiKey: clientApiKey || undefined
+        });
+        aiResponseText = directRes.response;
       }
-
-      const data = await response.json();
-      const aiResponseText = data.response;
 
       setAiMessages((prev) => [
         ...prev,

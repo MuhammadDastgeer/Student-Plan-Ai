@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   User, 
@@ -32,6 +32,17 @@ export default function WorkspaceSettings() {
   const [aiModel, setAiModel] = useState("GPT-4o-mini (Default)");
   const [mfaEnabled, setMfaEnabled] = useState(true);
   const [privacyMode, setPrivacyMode] = useState(false);
+  const [openaiApiKey, setOpenaiApiKey] = useState(() => {
+    return localStorage.getItem("openai_api_key") || "";
+  });
+
+  useEffect(() => {
+    if (openaiApiKey.trim()) {
+      localStorage.setItem("openai_api_key", openaiApiKey.trim());
+    } else {
+      localStorage.removeItem("openai_api_key");
+    }
+  }, [openaiApiKey]);
 
   const handleProfileSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -250,17 +261,40 @@ export default function WorkspaceSettings() {
                   <p className="text-xs text-stone-400 font-medium">Fine-tune the model behavior in the workspace chatbot.</p>
                 </div>
 
-                <div className="space-y-3">
-                  <label className="text-[11px] font-bold text-stone-500 uppercase tracking-wider block">Default Agent Engine</label>
-                  <select
-                    value={aiModel}
-                    onChange={(e) => setAiModel(e.target.value)}
-                    className="bg-stone-50 border border-[#EFECE6] rounded-lg px-3 py-2 text-xs text-stone-700 focus:outline-none w-full"
-                  >
-                    <option>GPT-4o-mini (Default)</option>
-                    <option>GPT-4o (Workspace Expert)</option>
-                    <option>Flowbase Custom Agent</option>
-                  </select>
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-stone-500 uppercase tracking-wider block">Default Agent Engine</label>
+                    <select
+                      value={aiModel}
+                      onChange={(e) => setAiModel(e.target.value)}
+                      className="bg-stone-50 border border-[#EFECE6] rounded-lg px-3 py-2 text-xs text-stone-700 focus:outline-none w-full"
+                    >
+                      <option>GPT-4o-mini (Default)</option>
+                      <option>GPT-4o (Workspace Expert)</option>
+                      <option>Flowbase Custom Agent</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-bold text-stone-500 uppercase tracking-wider block">OpenAI API Key</label>
+                      {openaiApiKey ? (
+                        <span className="text-[9px] bg-green-50 text-green-700 border border-green-200 px-1.5 py-0.5 rounded-md font-bold uppercase">Active & Saved</span>
+                      ) : (
+                        <span className="text-[9px] bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded-md font-bold uppercase">Using Server Key</span>
+                      )}
+                    </div>
+                    <input
+                      type="password"
+                      placeholder="sk-..."
+                      value={openaiApiKey}
+                      onChange={(e) => setOpenaiApiKey(e.target.value)}
+                      className="bg-stone-50 border border-[#EFECE6] rounded-lg px-3 py-2 text-xs text-stone-700 focus:outline-none w-full font-mono"
+                    />
+                    <p className="text-[10px] text-stone-400 font-medium">
+                      Configure your personal OpenAI API Key here. If left empty, the workspace will use the server's pre-configured key (OPENAI_API_KEY). This key is saved in your local browser storage.
+                    </p>
+                  </div>
                 </div>
               </motion.div>
             )}

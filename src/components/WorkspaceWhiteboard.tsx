@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { callOpenAIDiagramGenerate } from "../lib/openaiFallback";
 import { 
   Plus, 
   Trash2, 
@@ -692,23 +693,42 @@ export default function WorkspaceWhiteboard() {
     }
 
     try {
-      const res = await fetch("/api/diagrams/generate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          prompt: promptText,
-        }),
-      });
+      let data: any = null;
+      try {
+        const storedApiKey = localStorage.getItem("openai_api_key") || "";
+        const res = await fetch("/api/diagrams/generate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            prompt: promptText,
+            apiKey: storedApiKey || undefined,
+          }),
+        });
 
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.error || "Failed to generate diagram via AI");
+        if (!res.ok) {
+          const errText = await res.text();
+          let serverError = "Failed to generate diagram via AI";
+          try {
+            const parsed = JSON.parse(errText);
+            serverError = parsed.error || serverError;
+          } catch (e) {}
+          throw new Error(serverError);
+        }
+
+        data = await res.json();
+      } catch (err: any) {
+        console.warn("Backend API failed, trying direct OpenAI fallback:", err);
+        const storedApiKey = localStorage.getItem("openai_api_key") || "";
+        const directRes = await callOpenAIDiagramGenerate({
+          prompt: promptText,
+          apiKey: storedApiKey || undefined,
+        });
+        data = { elements: directRes.elements };
       }
 
-      const data = await res.json();
-      if (data.elements && data.elements.length > 0) {
+      if (data && data.elements && data.elements.length > 0) {
         // Assign fresh client-side IDs to prevent duplicates if generated multiple times
         const freshElements = data.elements.map((el: any) => ({
           ...el,

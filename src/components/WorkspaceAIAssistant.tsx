@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Sparkles, Calendar, Plus, Bot, MessageSquare, Send, Mic, Trash2, CheckCircle2, AlertCircle, FolderPlus, HelpCircle } from "lucide-react";
 import { useRouter } from "./Router";
+import { callOpenAINotesAI } from "../lib/openaiFallback";
 
 export default function WorkspaceAIAssistant() {
   const { navigate } = useRouter();
@@ -163,25 +164,47 @@ export default function WorkspaceAIAssistant() {
       // Pass past messages as history (max 199 messages, leaving room for the current prompt)
       const historyPayload = messages.slice(-199);
 
-      const response = await fetch("/api/notes/ai", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
+      let aiResponseText = "";
+      try {
+        const clientApiKey = localStorage.getItem("openai_api_key") || "";
+        const response = await fetch("/api/notes/ai", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            prompt: text,
+            context: context,
+            action: "workspace",
+            history: historyPayload,
+            apiKey: clientApiKey || undefined
+          })
+        });
+
+        if (!response.ok) {
+          const errText = await response.text();
+          let serverError = "Server error";
+          try {
+            const parsed = JSON.parse(errText);
+            serverError = parsed.error || serverError;
+          } catch (e) {}
+          throw new Error(serverError);
+        }
+
+        const data = await response.json();
+        aiResponseText = data.response || "No response received from Cozy AI.";
+      } catch (err: any) {
+        console.warn("Backend API failed, trying direct OpenAI fallback:", err);
+        const clientApiKey = localStorage.getItem("openai_api_key") || "";
+        const directRes = await callOpenAINotesAI({
           prompt: text,
           context: context,
           action: "workspace",
-          history: historyPayload
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to communicate with OpenAI API. Please check your OPENAI_API_KEY.");
+          history: historyPayload,
+          apiKey: clientApiKey || undefined
+        });
+        aiResponseText = directRes.response;
       }
-
-      const data = await response.json();
-      const aiResponseText = data.response || "No response received from Cozy AI.";
 
       setMessages((prev) => [
         ...prev,
