@@ -19,7 +19,13 @@ import {
   MessageSquare,
   Cpu,
   Menu,
-  X
+  X,
+  GraduationCap,
+  BookOpen,
+  Timer,
+  ClipboardList,
+  Award,
+  HelpCircle
 } from "lucide-react";
 import { useRouter } from "./Router";
 
@@ -40,6 +46,29 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
       items: [
         { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
         { label: "AI Assistant", icon: Sparkles, path: "/ai-assistant" },
+      ]
+    },
+    {
+      section: "STUDY",
+      items: [
+        { label: "Study Planner", icon: GraduationCap, path: "/study-planner" },
+        { label: "Flashcards", icon: BookOpen, path: "/study-flashcards" },
+        { label: "Focus Timer", icon: Timer, path: "/study-focus-timer" },
+        { label: "Assignments", icon: ClipboardList, path: "/study-assignments" },
+        { label: "Grade Tracker", icon: Award, path: "/study-grade-tracker" },
+      ]
+    },
+    {
+      section: "COLLABORATE",
+      items: [
+        { label: "Study groups", icon: Users, path: "/study-groups" },
+        { label: "Doubt board", icon: HelpCircle, path: "/doubt-board" },
+      ]
+    },
+    {
+      section: "RESOURCES",
+      items: [
+        { label: "Resource library", icon: BookOpen, path: "/resource-library" },
       ]
     },
     {

@@ -26,6 +26,18 @@ import WorkspaceTemplateBuilder from "./components/WorkspaceTemplateBuilder";
 import WorkspaceSettings from "./components/WorkspaceSettings";
 import WorkspaceApps from "./components/WorkspaceApps";
 
+// Import Study components
+import StudyPlanner from "./components/StudyPlanner";
+import StudyFlashcards from "./components/StudyFlashcards";
+import StudyFocusTimer from "./components/StudyFocusTimer";
+import StudyAssignments from "./components/StudyAssignments";
+import StudyGradeTracker from "./components/StudyGradeTracker";
+
+// Import Collaborate & Resources components
+import CollaborateStudyGroups from "./components/CollaborateStudyGroups";
+import CollaborateDoubtBoard from "./components/CollaborateDoubtBoard";
+import ResourcesLibrary from "./components/ResourcesLibrary";
+
 import { RouterProvider, Route, useRouter } from "./components/Router";
 
 function AppContent() {
@@ -42,7 +54,15 @@ function AppContent() {
     "/spaces",
     "/template-builder",
     "/settings",
-    "/apps"
+    "/apps",
+    "/study-planner",
+    "/study-flashcards",
+    "/study-focus-timer",
+    "/study-assignments",
+    "/study-grade-tracker",
+    "/study-groups",
+    "/doubt-board",
+    "/resource-library"
   ];
 
   const isWorkspace = workspacePaths.includes(currentPath);
@@ -60,6 +80,14 @@ function AppContent() {
         <Route path="/template-builder" element={<WorkspaceTemplateBuilder />} />
         <Route path="/settings" element={<WorkspaceSettings />} />
         <Route path="/apps" element={<WorkspaceApps />} />
+        <Route path="/study-planner" element={<StudyPlanner />} />
+        <Route path="/study-flashcards" element={<StudyFlashcards />} />
+        <Route path="/study-focus-timer" element={<StudyFocusTimer />} />
+        <Route path="/study-assignments" element={<StudyAssignments />} />
+        <Route path="/study-grade-tracker" element={<StudyGradeTracker />} />
+        <Route path="/study-groups" element={<CollaborateStudyGroups />} />
+        <Route path="/doubt-board" element={<CollaborateDoubtBoard />} />
+        <Route path="/resource-library" element={<ResourcesLibrary />} />
       </WorkspaceLayout>
     );
   }
