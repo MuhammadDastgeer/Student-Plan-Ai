@@ -30,12 +30,12 @@ export default function WorkspaceAIAssistant() {
   }, [messages]);
 
   const prompts = [
+    "Create a study group called Calc Warriors for Mathematics",
+    "Log a doubt about integration by parts choosing u and dv",
+    "Add a resource 'Introduction to Algorithms' by CLRS to library",
     "Create a task tomorrow for reviewing code with priority high",
     "Add meeting reminder on calendar for Tuesday at 11:30",
-    "Generate a new note with ideas for a startup",
-    "Create a space/page named marketing and research",
-    "Add a sticky note on whiteboard with text Hello World",
-    "Plan my week and suggest what to do"
+    "Generate a new note with ideas for a startup"
   ];
 
   const handlePromptClick = (prompt: string) => {
@@ -51,6 +51,9 @@ export default function WorkspaceAIAssistant() {
     const whiteboards = localStorage.getItem("workspace_whiteboards_list");
     const whiteboardData = localStorage.getItem("workspace_whiteboards_data");
     const spaces = localStorage.getItem("workspace_spaces");
+    const studyGroups = localStorage.getItem("flowbase_study_groups");
+    const doubts = localStorage.getItem("flowbase_doubts");
+    const resources = localStorage.getItem("flowbase_resources");
 
     let context = "CURRENT WORKSPACE STATE & DETAILED RECORDS:\n\n";
     
@@ -139,6 +142,48 @@ export default function WorkspaceAIAssistant() {
       }
     } catch (e) {
       context += "Error reading spaces.\n";
+    }
+
+    context += "\n--- STUDY GROUPS ---\n";
+    try {
+      const parsedGroups = studyGroups ? JSON.parse(studyGroups) : [];
+      if (parsedGroups.length > 0) {
+        parsedGroups.forEach((g: any) => {
+          context += `- Group ID: "${g.id}", Name: "${g.name}", Subject: "${g.subject}", Members: ${g.membersCount}, Location: "${g.location}", Next Meeting: "${g.nextMeeting}", Description: "${g.description || ''}"\n`;
+        });
+      } else {
+        context += "No study groups exist.\n";
+      }
+    } catch (e) {
+      context += "Error reading study groups.\n";
+    }
+
+    context += "\n--- ACADEMIC DOUBTS (DOUBT BOARD) ---\n";
+    try {
+      const parsedDoubts = doubts ? JSON.parse(doubts) : [];
+      if (parsedDoubts.length > 0) {
+        parsedDoubts.forEach((d: any) => {
+          context += `- Doubt ID: "${d.id}", Title: "${d.title}", Subject: "${d.subject}", Status: "${d.status}", Question: "${d.question}", Solution: "${d.solution ? d.solution.substring(0, 150) + '...' : ''}"\n`;
+        });
+      } else {
+        context += "No doubts exist.\n";
+      }
+    } catch (e) {
+      context += "Error reading doubts.\n";
+    }
+
+    context += "\n--- ACADEMIC RESOURCES ---\n";
+    try {
+      const parsedResources = resources ? JSON.parse(resources) : [];
+      if (parsedResources.length > 0) {
+        parsedResources.forEach((r: any) => {
+          context += `- Resource ID: "${r.id}", Title: "${r.title}", Category: "${r.category}", Author: "${r.author}", URL: "${r.url || ''}", Tags: [${(r.tags || []).join(', ')}], Notes: "${r.notes ? r.notes.substring(0, 150) + '...' : ''}"\n`;
+        });
+      } else {
+        context += "No resources exist.\n";
+      }
+    } catch (e) {
+      context += "Error reading resources.\n";
     }
 
     return context;
@@ -584,6 +629,159 @@ export default function WorkspaceAIAssistant() {
           setSuccessNotification(`Successfully deleted Space folder!`);
         } else {
           setSuccessNotification(`Space folder to delete was not found.`);
+        }
+      }
+
+      else if (type === "create_study_group") {
+        const savedGroups = localStorage.getItem("flowbase_study_groups");
+        let groups = savedGroups ? JSON.parse(savedGroups) : [];
+        const newGroup = {
+          id: "group-" + Date.now(),
+          name: pendingAction.name || "New Study Group",
+          subject: pendingAction.subject || "General",
+          membersCount: 1,
+          location: pendingAction.location || "Online / Zoom",
+          description: pendingAction.description || "Added automatically by Cozy AI.",
+          nextMeeting: pendingAction.nextMeeting || "Flexible Schedule"
+        };
+        groups.push(newGroup);
+        localStorage.setItem("flowbase_study_groups", JSON.stringify(groups));
+
+        const savedMessages = localStorage.getItem("flowbase_study_group_msgs");
+        let messagesMap = savedMessages ? JSON.parse(savedMessages) : {};
+        messagesMap[newGroup.id] = [{
+          id: "msg-" + Date.now(),
+          sender: "AI Facilitator",
+          role: "ai",
+          text: `Welcome to ${newGroup.name}. Let's make this study session super productive! Ask any questions or generate an agenda.`,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }];
+        localStorage.setItem("flowbase_study_group_msgs", JSON.stringify(messagesMap));
+
+        setSuccessNotification(`Successfully launched Study Group "${newGroup.name}"!`);
+      }
+
+      else if (type === "edit_study_group") {
+        const savedGroups = localStorage.getItem("flowbase_study_groups");
+        let groups = savedGroups ? JSON.parse(savedGroups) : [];
+        const groupToEdit = groups.find((g: any) => g.id === pendingAction.groupId || g.name.toLowerCase().includes((pendingAction.groupId || "").toLowerCase()));
+        if (groupToEdit) {
+          if (pendingAction.name !== undefined) groupToEdit.name = pendingAction.name;
+          if (pendingAction.subject !== undefined) groupToEdit.subject = pendingAction.subject;
+          if (pendingAction.location !== undefined) groupToEdit.location = pendingAction.location;
+          if (pendingAction.nextMeeting !== undefined) groupToEdit.nextMeeting = pendingAction.nextMeeting;
+          if (pendingAction.description !== undefined) groupToEdit.description = pendingAction.description;
+          localStorage.setItem("flowbase_study_groups", JSON.stringify(groups));
+          setSuccessNotification(`Successfully updated Study Group "${groupToEdit.name}"!`);
+        } else {
+          setSuccessNotification(`Could not find specified study group to edit.`);
+        }
+      }
+
+      else if (type === "delete_study_group") {
+        const savedGroups = localStorage.getItem("flowbase_study_groups");
+        let groups = savedGroups ? JSON.parse(savedGroups) : [];
+        const initialLen = groups.length;
+        groups = groups.filter((g: any) => g.id !== pendingAction.groupId && !g.name.toLowerCase().includes((pendingAction.groupId || "").toLowerCase()));
+        localStorage.setItem("flowbase_study_groups", JSON.stringify(groups));
+        if (groups.length < initialLen) {
+          setSuccessNotification(`Successfully deleted Study Group!`);
+        } else {
+          setSuccessNotification(`Study Group to delete was not found.`);
+        }
+      }
+
+      else if (type === "create_doubt") {
+        const savedDoubts = localStorage.getItem("flowbase_doubts");
+        let doubts = savedDoubts ? JSON.parse(savedDoubts) : [];
+        const newDoubt = {
+          id: "doubt-" + Date.now(),
+          title: pendingAction.title || "New Doubt",
+          subject: pendingAction.subject || "General",
+          question: pendingAction.question || "",
+          status: "pending",
+          createdAt: new Date().toLocaleDateString([], { month: "long", day: "numeric", year: "numeric" })
+        };
+        doubts.unshift(newDoubt);
+        localStorage.setItem("flowbase_doubts", JSON.stringify(doubts));
+        setSuccessNotification(`Successfully posted doubt "${newDoubt.title}" to Doubt Board!`);
+      }
+
+      else if (type === "edit_doubt") {
+        const savedDoubts = localStorage.getItem("flowbase_doubts");
+        let doubts = savedDoubts ? JSON.parse(savedDoubts) : [];
+        const doubtToEdit = doubts.find((d: any) => d.id === pendingAction.doubtId || d.title.toLowerCase().includes((pendingAction.doubtId || "").toLowerCase()));
+        if (doubtToEdit) {
+          if (pendingAction.title !== undefined) doubtToEdit.title = pendingAction.title;
+          if (pendingAction.subject !== undefined) doubtToEdit.subject = pendingAction.subject;
+          if (pendingAction.question !== undefined) doubtToEdit.question = pendingAction.question;
+          if (pendingAction.status !== undefined) doubtToEdit.status = pendingAction.status;
+          if (pendingAction.solution !== undefined) doubtToEdit.solution = pendingAction.solution;
+          localStorage.setItem("flowbase_doubts", JSON.stringify(doubts));
+          setSuccessNotification(`Successfully updated Doubt "${doubtToEdit.title}"!`);
+        } else {
+          setSuccessNotification(`Could not find specified doubt to edit.`);
+        }
+      }
+
+      else if (type === "delete_doubt") {
+        const savedDoubts = localStorage.getItem("flowbase_doubts");
+        let doubts = savedDoubts ? JSON.parse(savedDoubts) : [];
+        const initialLen = doubts.length;
+        doubts = doubts.filter((d: any) => d.id !== pendingAction.doubtId && !d.title.toLowerCase().includes((pendingAction.doubtId || "").toLowerCase()));
+        localStorage.setItem("flowbase_doubts", JSON.stringify(doubts));
+        if (doubts.length < initialLen) {
+          setSuccessNotification(`Successfully deleted Doubt from Doubt Board!`);
+        } else {
+          setSuccessNotification(`Doubt to delete was not found.`);
+        }
+      }
+
+      else if (type === "create_resource") {
+        const savedResources = localStorage.getItem("flowbase_resources");
+        let resources = savedResources ? JSON.parse(savedResources) : [];
+        const newRes = {
+          id: "res-" + Date.now(),
+          title: pendingAction.title || "New Resource",
+          category: pendingAction.category || "book",
+          author: pendingAction.author || "Unknown",
+          url: pendingAction.url || undefined,
+          tags: pendingAction.tags || [],
+          notes: pendingAction.notes || undefined
+        };
+        resources.unshift(newRes);
+        localStorage.setItem("flowbase_resources", JSON.stringify(resources));
+        setSuccessNotification(`Successfully added Resource "${newRes.title}" to library!`);
+      }
+
+      else if (type === "edit_resource") {
+        const savedResources = localStorage.getItem("flowbase_resources");
+        let resources = savedResources ? JSON.parse(savedResources) : [];
+        const resToEdit = resources.find((r: any) => r.id === pendingAction.resourceId || r.title.toLowerCase().includes((pendingAction.resourceId || "").toLowerCase()));
+        if (resToEdit) {
+          if (pendingAction.title !== undefined) resToEdit.title = pendingAction.title;
+          if (pendingAction.category !== undefined) resToEdit.category = pendingAction.category;
+          if (pendingAction.author !== undefined) resToEdit.author = pendingAction.author;
+          if (pendingAction.url !== undefined) resToEdit.url = pendingAction.url;
+          if (pendingAction.tags !== undefined) resToEdit.tags = pendingAction.tags;
+          if (pendingAction.notes !== undefined) resToEdit.notes = pendingAction.notes;
+          localStorage.setItem("flowbase_resources", JSON.stringify(resources));
+          setSuccessNotification(`Successfully updated Resource "${resToEdit.title}"!`);
+        } else {
+          setSuccessNotification(`Could not find specified resource to edit.`);
+        }
+      }
+
+      else if (type === "delete_resource") {
+        const savedResources = localStorage.getItem("flowbase_resources");
+        let resources = savedResources ? JSON.parse(savedResources) : [];
+        const initialLen = resources.length;
+        resources = resources.filter((r: any) => r.id !== pendingAction.resourceId && !r.title.toLowerCase().includes((pendingAction.resourceId || "").toLowerCase()));
+        localStorage.setItem("flowbase_resources", JSON.stringify(resources));
+        if (resources.length < initialLen) {
+          setSuccessNotification(`Successfully deleted Resource from library!`);
+        } else {
+          setSuccessNotification(`Resource to delete was not found.`);
         }
       }
 

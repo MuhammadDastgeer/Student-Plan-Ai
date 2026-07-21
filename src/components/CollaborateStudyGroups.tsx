@@ -66,29 +66,9 @@ export default function CollaborateStudyGroups() {
         console.error(e);
       }
     } else {
-      const defaultGroups: StudyGroup[] = [
-        {
-          id: "group-1",
-          name: "Calculus Warriors",
-          subject: "Mathematics",
-          membersCount: 4,
-          location: "Library Study Room B / Zoom",
-          description: "Weekly problem sets solving and prep for midterms.",
-          nextMeeting: "Thursdays at 4:00 PM"
-        },
-        {
-          id: "group-2",
-          name: "Bio-Chem Collective",
-          subject: "Biochemistry",
-          membersCount: 3,
-          location: "Zoom Virtual Lab",
-          description: "Focusing on macromolecular structure and metabolic pathways.",
-          nextMeeting: "Mondays at 6:30 PM"
-        }
-      ];
-      setGroups(defaultGroups);
-      setSelectedGroupId(defaultGroups[0].id);
-      localStorage.setItem("flowbase_study_groups", JSON.stringify(defaultGroups));
+      setGroups([]);
+      setSelectedGroupId("");
+      localStorage.setItem("flowbase_study_groups", JSON.stringify([]));
     }
 
     if (savedMessages) {
@@ -98,28 +78,8 @@ export default function CollaborateStudyGroups() {
         console.error(e);
       }
     } else {
-      const defaultMsgs: Record<string, DiscussionMessage[]> = {
-        "group-1": [
-          {
-            id: "msg-1",
-            sender: "AI Facilitator",
-            role: "ai",
-            text: "Assalam-o-Alaikum! Welcome to Calculus Warriors. I am your group study facilitator. Click 'Generate Meeting Agenda' or ask me any Calculus query to kickstart your discussion!",
-            timestamp: "10:30 AM"
-          }
-        ],
-        "group-2": [
-          {
-            id: "msg-2",
-            sender: "AI Facilitator",
-            role: "ai",
-            text: "Welcome to Bio-Chem Collective study room! Let's crack amino acids and glycolysis together. Ask me anything, or generate an active recall plan for the group!",
-            timestamp: "Yesterday"
-          }
-        ]
-      };
-      setMessages(defaultMsgs);
-      localStorage.setItem("flowbase_study_group_msgs", JSON.stringify(defaultMsgs));
+      setMessages({});
+      localStorage.setItem("flowbase_study_group_msgs", JSON.stringify({}));
     }
   }, []);
 

@@ -59,29 +59,9 @@ export default function ResourcesLibrary() {
         console.error(e);
       }
     } else {
-      const defaultResources: Resource[] = [
-        {
-          id: "res-1",
-          title: "Introduction to Algorithms (CLRS)",
-          category: "book",
-          url: "https://mitpress.mit.edu/9780262046305/introduction-to-algorithms/",
-          author: "Thomas H. Cormen",
-          tags: ["Computer Science", "Algorithms", "Data Structures"],
-          notes: "Essential textbook for dynamic programming and sorting mechanisms."
-        },
-        {
-          id: "res-2",
-          title: "MIT 18.06 Linear Algebra lectures",
-          category: "lecture",
-          url: "https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/",
-          author: "Prof. Gilbert Strang",
-          tags: ["Mathematics", "Linear Algebra", "MIT"],
-          notes: "Focus on vector spaces, eigenvalues, and singular value decomposition."
-        }
-      ];
-      setResources(defaultResources);
-      setSelectedResourceId(defaultResources[0].id);
-      localStorage.setItem("flowbase_resources", JSON.stringify(defaultResources));
+      setResources([]);
+      setSelectedResourceId("");
+      localStorage.setItem("flowbase_resources", JSON.stringify([]));
     }
   }, []);
 

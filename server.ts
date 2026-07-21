@@ -174,7 +174,100 @@ async function startServer() {
           "    ```json\n" +
           "    {\n" +
           "      \"type\": \"switch_tab\",\n" +
-          "      \"tab\": \"/calendar\" or \"/kanban\" or \"/notes\" or \"/whiteboard\" or \"/spaces\" or \"/dashboard\" or \"/settings\"\n" +
+          "      \"tab\": \"/calendar\" or \"/kanban\" or \"/notes\" or \"/whiteboard\" or \"/spaces\" or \"/dashboard\" or \"/settings\" or \"/study-groups\" or \"/doubt-board\" or \"/resource-library\"\n" +
+          "    }\n" +
+          "    ```\n" +
+          "7. Study Groups:\n" +
+          "  - Create Study Group:\n" +
+          "    ```json\n" +
+          "    {\n" +
+          "      \"type\": \"create_study_group\",\n" +
+          "      \"name\": \"Group Name\",\n" +
+          "      \"subject\": \"Subject\",\n" +
+          "      \"location\": \"Location or link (optional)\",\n" +
+          "      \"nextMeeting\": \"Schedule (optional)\",\n" +
+          "      \"description\": \"Description (optional)\"\n" +
+          "    }\n" +
+          "    ```\n" +
+          "  - Edit Study Group:\n" +
+          "    ```json\n" +
+          "    {\n" +
+          "      \"type\": \"edit_study_group\",\n" +
+          "      \"groupId\": \"group-id-or-name\",\n" +
+          "      \"name\": \"New Name (optional)\",\n" +
+          "      \"subject\": \"New Subject (optional)\",\n" +
+          "      \"location\": \"New location (optional)\",\n" +
+          "      \"nextMeeting\": \"New schedule (optional)\",\n" +
+          "      \"description\": \"New description (optional)\"\n" +
+          "    }\n" +
+          "    ```\n" +
+          "  - Delete Study Group:\n" +
+          "    ```json\n" +
+          "    {\n" +
+          "      \"type\": \"delete_study_group\",\n" +
+          "      \"groupId\": \"group-id-or-name\"\n" +
+          "    }\n" +
+          "    ```\n" +
+          "8. Academic Doubts (Doubt Board):\n" +
+          "  - Create Doubt:\n" +
+          "    ```json\n" +
+          "    {\n" +
+          "      \"type\": \"create_doubt\",\n" +
+          "      \"title\": \"Doubt Title\",\n" +
+          "      \"subject\": \"Subject tag\",\n" +
+          "      \"question\": \"Question body\"\n" +
+          "    }\n" +
+          "    ```\n" +
+          "  - Edit Doubt:\n" +
+          "    ```json\n" +
+          "    {\n" +
+          "      \"type\": \"edit_doubt\",\n" +
+          "      \"doubtId\": \"doubt-id-or-title\",\n" +
+          "      \"title\": \"New Title (optional)\",\n" +
+          "      \"subject\": \"New Subject (optional)\",\n" +
+          "      \"question\": \"New Question (optional)\",\n" +
+          "      \"status\": \"pending\"/\"solved\" (optional),\n" +
+          "      \"solution\": \"Solution content (optional)\"\n" +
+          "    }\n" +
+          "    ```\n" +
+          "  - Delete Doubt:\n" +
+          "    ```json\n" +
+          "    {\n" +
+          "      \"type\": \"delete_doubt\",\n" +
+          "      \"doubtId\": \"doubt-id-or-title\"\n" +
+          "    }\n" +
+          "    ```\n" +
+          "9. Academic Resources (Resource Library):\n" +
+          "  - Create Resource:\n" +
+          "    ```json\n" +
+          "    {\n" +
+          "      \"type\": \"create_resource\",\n" +
+          "      \"title\": \"Resource Title\",\n" +
+          "      \"category\": \"book\"/\"article\"/\"lecture\"/\"other\",\n" +
+          "      \"author\": \"Author\",\n" +
+          "      \"url\": \"URL link (optional)\",\n" +
+          "      \"tags\": [\"tag1\", \"tag2\"] (optional),\n" +
+          "      \"notes\": \"Notes (optional)\"\n" +
+          "    }\n" +
+          "    ```\n" +
+          "  - Edit Resource:\n" +
+          "    ```json\n" +
+          "    {\n" +
+          "      \"type\": \"edit_resource\",\n" +
+          "      \"resourceId\": \"resource-id-or-title\",\n" +
+          "      \"title\": \"New Title (optional)\",\n" +
+          "      \"category\": \"book\"/\"article\"/\"lecture\"/\"other\" (optional),\n" +
+          "      \"author\": \"New Author (optional)\",\n" +
+          "      \"url\": \"New URL (optional)\",\n" +
+          "      \"tags\": [\"new-tag\"] (optional),\n" +
+          "      \"notes\": \"New notes (optional)\"\n" +
+          "    }\n" +
+          "    ```\n" +
+          "  - Delete Resource:\n" +
+          "    ```json\n" +
+          "    {\n" +
+          "      \"type\": \"delete_resource\",\n" +
+          "      \"resourceId\": \"resource-id-or-title\"\n" +
           "    }\n" +
           "    ```\n\n" +
           "Always remember to ask the user a confirming question at the end of the conversation to keep them fully in the loop.";

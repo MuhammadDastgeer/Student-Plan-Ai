@@ -57,31 +57,9 @@ export default function StudyGradeTracker() {
         console.error(e);
       }
     } else {
-      // Default courses
-      const initial: Course[] = [
-        {
-          id: "c-1",
-          name: "Computer Science 101",
-          credits: 4,
-          components: [
-            { id: "comp-1", name: "Midterm Exam", score: 88, weight: 30 },
-            { id: "comp-2", name: "Homework Set 1", score: 95, weight: 10 },
-            { id: "comp-3", name: "Programming Lab 1", score: 90, weight: 15 }
-          ]
-        },
-        {
-          id: "c-2",
-          name: "General Physics",
-          credits: 3,
-          components: [
-            { id: "comp-4", name: "Quiz 1", score: 72, weight: 15 },
-            { id: "comp-5", name: "Lab Experiment", score: 85, weight: 20 }
-          ]
-        }
-      ];
-      setCourses(initial);
-      setSelectedCourseId(initial[0].id);
-      localStorage.setItem("flowbase_courses", JSON.stringify(initial));
+      setCourses([]);
+      setSelectedCourseId("");
+      localStorage.setItem("flowbase_courses", JSON.stringify([]));
     }
   }, []);
 

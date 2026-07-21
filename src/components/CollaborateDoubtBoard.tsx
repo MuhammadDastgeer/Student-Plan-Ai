@@ -53,42 +53,9 @@ export default function CollaborateDoubtBoard() {
         console.error(e);
       }
     } else {
-      const defaultDoubts: Doubt[] = [
-        {
-          id: "doubt-1",
-          title: "How does RNA splicing work?",
-          subject: "Biochemistry",
-          question: "Can someone explain exons, introns, and how spliceosomes remove introns? Also why alternative splicing is important?",
-          status: "solved",
-          solution: `**Here is a detailed explanation of RNA splicing:**
-
-RNA splicing is a crucial post-transcriptional modification where **introns** (non-coding regions) are removed and **exons** (coding regions) are joined together.
-
-### 1. Step-by-Step Mechanism
-* **Transcription:** The gene is transcribed into pre-mRNA containing both introns and exons.
-* **Spliceosome Assembly:** A massive complex called the **spliceosome** (made of snRNAs and proteins) identifies boundary markers at the 5' and 3' ends of introns.
-* **Intron Removal:** The spliceosome loops the intron into a "lariat" shape, cuts it out, and ligates the exons securely together.
-
-### 2. What is Alternative Splicing?
-Think of exons like separate blocks of Lego. alternative splicing lets the cell pick and choose which blocks to join!
-* For example, a single pre-mRNA can produce Protein Alpha (Exons 1-2-3) or Protein Beta (Exons 1-3-4).
-* **Significance:** This is why humans only have ~20,000 genes but can produce over 100,000 distinct protein structures!
-
-**Sabar aur focus se har concept clear ho sakta hai. Keep reading!**`,
-          createdAt: "July 18, 2026"
-        },
-        {
-          id: "doubt-2",
-          title: "Integration by Parts formula trick",
-          subject: "Mathematics",
-          question: "I always get confused when choosing 'u' and 'dv' in integration by parts. Is there any quick rule?",
-          status: "pending",
-          createdAt: "July 20, 2026"
-        }
-      ];
-      setDoubts(defaultDoubts);
-      setSelectedDoubtId(defaultDoubts[0].id);
-      localStorage.setItem("flowbase_doubts", JSON.stringify(defaultDoubts));
+      setDoubts([]);
+      setSelectedDoubtId("");
+      localStorage.setItem("flowbase_doubts", JSON.stringify([]));
     }
   }, []);
 

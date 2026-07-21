@@ -57,34 +57,9 @@ export default function StudyFlashcards() {
         console.error(e);
       }
     } else {
-      // Default sample deck
-      const sampleDeck: FlashcardDeck = {
-        id: "sample-deck-1",
-        name: "Web Development Concepts",
-        cards: [
-          {
-            id: "card-1",
-            front: "What does HTML stand for?",
-            back: "HyperText Markup Language - the standard markup language for documents designed to be displayed in a web browser.",
-            mastered: false
-          },
-          {
-            id: "card-2",
-            front: "What is the primary difference between let and var in JavaScript?",
-            back: "var is function-scoped while let is block-scoped. var also allows redeclaration within scope, whereas let does not.",
-            mastered: false
-          },
-          {
-            id: "card-3",
-            front: "What is React State?",
-            back: "An internal built-in object in a React component that holds dynamic data, determining how the component renders and behaves.",
-            mastered: false
-          }
-        ]
-      };
-      setDecks([sampleDeck]);
-      setSelectedDeckId(sampleDeck.id);
-      localStorage.setItem("flowbase_flashcards", JSON.stringify([sampleDeck]));
+      setDecks([]);
+      setSelectedDeckId("");
+      localStorage.setItem("flowbase_flashcards", JSON.stringify([]));
     }
   }, []);
 

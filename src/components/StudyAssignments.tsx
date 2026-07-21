@@ -47,28 +47,8 @@ export default function StudyAssignments() {
         console.error(e);
       }
     } else {
-      const sample = [
-        {
-          id: "hw-1",
-          title: "Differential Equations Problem Set",
-          subject: "Mathematics",
-          dueDate: new Date(Date.now() + 86400000 * 3).toISOString().split('T')[0],
-          status: "in_progress" as const,
-          priority: "high" as const,
-          notes: "Solve problems 1-12 from Chapter 4."
-        },
-        {
-          id: "hw-2",
-          title: "Biochemistry Essay on Protein Folding",
-          subject: "Chemistry",
-          dueDate: new Date(Date.now() + 86400000 * 7).toISOString().split('T')[0],
-          status: "not_started" as const,
-          priority: "medium" as const,
-          notes: "Focus on chaperone proteins and misfolding diseases."
-        }
-      ];
-      setAssignments(sample);
-      localStorage.setItem("flowbase_assignments", JSON.stringify(sample));
+      setAssignments([]);
+      localStorage.setItem("flowbase_assignments", JSON.stringify([]));
     }
   }, []);
 
