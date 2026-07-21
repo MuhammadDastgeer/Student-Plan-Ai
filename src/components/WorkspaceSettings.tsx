@@ -13,7 +13,9 @@ import {
   Check, 
   HelpCircle,
   Bell,
-  Cpu
+  Cpu,
+  AlertCircle,
+  CheckCircle2
 } from "lucide-react";
 
 export default function WorkspaceSettings() {
@@ -43,6 +45,23 @@ export default function WorkspaceSettings() {
       localStorage.removeItem("openai_api_key");
     }
   }, [openaiApiKey]);
+
+  const [hasServerKey, setHasServerKey] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    fetch("/api/health")
+      .then((res) => {
+        if (!res.ok) throw new Error();
+        return res.json();
+      })
+      .then((data) => {
+        setHasServerKey(!!data.hasServerApiKey);
+      })
+      .catch(() => {
+        // If server is not running or returns 404 (static Vercel deployment), set to false
+        setHasServerKey(false);
+      });
+  }, []);
 
   const handleProfileSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -260,6 +279,32 @@ export default function WorkspaceSettings() {
                   <h3 className="font-serif text-lg font-bold text-[#221C18]">AI Assistant defaults</h3>
                   <p className="text-xs text-stone-400 font-medium">Fine-tune the model behavior in the workspace chatbot.</p>
                 </div>
+
+                {hasServerKey === false && (
+                  <div className="bg-amber-50/70 border border-amber-200/80 rounded-xl p-3.5 space-y-1.5">
+                    <div className="flex items-center gap-2 text-amber-800">
+                      <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                      <span className="text-xs font-bold uppercase tracking-wider">No Server API Key Found</span>
+                    </div>
+                    <p className="text-[11px] text-amber-700 leading-relaxed font-medium">
+                      The production server does not have a pre-configured <code className="bg-amber-100/60 px-1.5 py-0.5 rounded font-mono text-[10px]">OPENAI_API_KEY</code> environment variable, or you are running on a static server platform (like Vercel) where API routes are not active.
+                    </p>
+                    <p className="text-[11px] text-amber-700 leading-relaxed font-bold">
+                      👉 To use any AI features, please paste your personal OpenAI API Key (<code className="bg-amber-100/60 px-1.5 py-0.5 rounded font-mono text-[10px]">sk-...</code>) in the field below. Your key will be saved safely in your browser's local storage and used directly for client-side API fallbacks.
+                    </p>
+                  </div>
+                )}
+                {hasServerKey === true && (
+                  <div className="bg-emerald-50/50 border border-emerald-200/60 rounded-xl p-3.5 space-y-1">
+                    <div className="flex items-center gap-2 text-emerald-800">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span className="text-xs font-bold uppercase tracking-wider">Server Key Active</span>
+                    </div>
+                    <p className="text-[11px] text-emerald-700 leading-relaxed font-medium">
+                      The workspace backend is successfully running and has an active <code className="bg-emerald-100/50 px-1.5 py-0.5 rounded font-mono text-[10px]">OPENAI_API_KEY</code> configured. All AI features will work seamlessly out-of-the-box!
+                    </p>
+                  </div>
+                )}
 
                 <div className="space-y-4">
                   <div className="space-y-1.5">

@@ -261,7 +261,10 @@ async function startServer() {
 
   // Health check
   app.get("/api/health", (req, res) => {
-    res.json({ status: "ok" });
+    res.json({ 
+      status: "ok",
+      hasServerApiKey: !!process.env.OPENAI_API_KEY
+    });
   });
 
   // API Endpoint for Template Generation
@@ -490,6 +493,22 @@ Ensure all elements are beautifully spaced, layout flows logical (usually left-t
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://0.0.0.0:${PORT}`);
+    
+    // Validate OpenAI API Key on startup
+    const serverApiKey = process.env.OPENAI_API_KEY?.trim();
+    if (serverApiKey) {
+      console.log("====================================================================");
+      console.log(`✅ Success: process.env.OPENAI_API_KEY is loaded successfully.`);
+      console.log(`Key is defined and has a length of ${serverApiKey.length} characters.`);
+      console.log("====================================================================");
+    } else {
+      console.warn("====================================================================");
+      console.warn("⚠️ Warning: process.env.OPENAI_API_KEY is NOT defined on the server!");
+      console.warn("Server-side API calls will fail unless clients supply their own");
+      console.warn("OpenAI API Key via the Settings -> AI Settings panel.");
+      console.warn("Please configure OPENAI_API_KEY in your hosting environment variables.");
+      console.warn("====================================================================");
+    }
   });
 }
 

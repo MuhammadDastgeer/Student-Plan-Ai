@@ -11,9 +11,11 @@ export async function callOpenAINotesAI(payload: {
   history?: any[];
   apiKey?: string;
 }) {
-  const apiKey = payload.apiKey?.trim() || localStorage.getItem("openai_api_key")?.trim();
+  const apiKey = payload.apiKey?.trim() || 
+                 localStorage.getItem("openai_api_key")?.trim() || 
+                 (import.meta as any).env?.VITE_OPENAI_API_KEY?.trim();
   if (!apiKey) {
-    throw new Error("No OpenAI API Key found. Please configure your OpenAI API Key in the Settings -> AI Settings panel.");
+    throw new Error("No OpenAI API Key found. Please configure your OpenAI API Key in the Settings -> AI Settings panel or set VITE_OPENAI_API_KEY in your deployment environment variables.");
   }
 
   let systemInstruction = "You are a cozy, professional, and friendly AI writing assistant for Flowbase Notes. " +
@@ -249,9 +251,11 @@ export async function callOpenAITemplateGenerate(payload: {
   prompt: string;
   apiKey?: string;
 }) {
-  const apiKey = payload.apiKey?.trim() || localStorage.getItem("openai_api_key")?.trim();
+  const apiKey = payload.apiKey?.trim() || 
+                 localStorage.getItem("openai_api_key")?.trim() || 
+                 (import.meta as any).env?.VITE_OPENAI_API_KEY?.trim();
   if (!apiKey) {
-    throw new Error("No OpenAI API Key found. Please configure your OpenAI API Key in the Settings -> AI Settings panel.");
+    throw new Error("No OpenAI API Key found. Please configure your OpenAI API Key in the Settings -> AI Settings panel or set VITE_OPENAI_API_KEY in your deployment environment variables.");
   }
 
   const systemPrompt = `You are a professional AI UI and productivity systems designer.
@@ -324,9 +328,11 @@ export async function callOpenAIDiagramGenerate(payload: {
   prompt: string;
   apiKey?: string;
 }) {
-  const apiKey = payload.apiKey?.trim() || localStorage.getItem("openai_api_key")?.trim();
+  const apiKey = payload.apiKey?.trim() || 
+                 localStorage.getItem("openai_api_key")?.trim() || 
+                 (import.meta as any).env?.VITE_OPENAI_API_KEY?.trim();
   if (!apiKey) {
-    throw new Error("No OpenAI API Key found. Please configure your OpenAI API Key in the Settings -> AI Settings panel.");
+    throw new Error("No OpenAI API Key found. Please configure your OpenAI API Key in the Settings -> AI Settings panel or set VITE_OPENAI_API_KEY in your deployment environment variables.");
   }
 
   const systemPrompt = `You are a professional software architect and dynamic diagram designer.

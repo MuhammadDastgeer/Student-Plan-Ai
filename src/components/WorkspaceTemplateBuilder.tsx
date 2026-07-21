@@ -125,6 +125,8 @@ export default function WorkspaceTemplateBuilder() {
     setIsGenerating(true);
     setBuildSuccess(false);
 
+    const activeApiKey = apiKey.trim() || localStorage.getItem("openai_api_key")?.trim() || "";
+
     try {
       let generatedData: any = null;
       try {
@@ -137,7 +139,7 @@ export default function WorkspaceTemplateBuilder() {
             name: newName.trim(),
             description: newDesc.trim() || "AI built custom workspace module.",
             prompt: newPrompt.trim(),
-            apiKey: apiKey.trim() || undefined, // Send if entered in UI
+            apiKey: activeApiKey || undefined,
           }),
         });
 
