@@ -1,8 +1,11 @@
-import { motion } from "motion/react";
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { useRouter } from "./Router";
+import { Menu, X } from "lucide-react";
 
 export default function Header() {
   const { currentPath, navigate } = useRouter();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const navItems = [
     { label: "Home", path: "/home" },
@@ -36,7 +39,7 @@ export default function Header() {
           <span className="font-sans font-bold text-xl text-[#221C18] tracking-tight">Flowbase</span>
         </div>
 
-        {/* Navigation Menu */}
+        {/* Navigation Menu (Desktop) */}
         <nav className="hidden md:flex items-center gap-8 text-[15px] font-medium text-[#5E554E]">
           {navItems.map((item) => {
             const isActive = currentPath === item.path;
@@ -61,16 +64,58 @@ export default function Header() {
           })}
         </nav>
 
-        {/* CTA Button */}
-        <motion.button
-          onClick={() => navigate("/dashboard")}
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          className="bg-[#c67f43] hover:bg-[#b06f38] text-white text-[14px] font-semibold px-5 py-2.5 rounded-lg flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
-        >
-          Get Started <span className="text-[15px]">→</span>
-        </motion.button>
+        {/* CTA Button & Mobile Toggle */}
+        <div className="flex items-center gap-3">
+          <motion.button
+            onClick={() => navigate("/dashboard")}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            className="bg-[#c67f43] hover:bg-[#b06f38] text-white text-[13px] sm:text-[14px] font-semibold px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+          >
+            Get Started <span className="text-[14px] sm:text-[15px]">→</span>
+          </motion.button>
+
+          {/* Hamburger Icon for Mobile */}
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="p-2 md:hidden text-stone-600 hover:bg-stone-100 rounded-lg transition-colors focus:outline-none cursor-pointer"
+            aria-label="Toggle navigation menu"
+          >
+            {menuOpen ? <X className="w-5.5 h-5.5" /> : <Menu className="w-5.5 h-5.5" />}
+          </button>
+        </div>
       </div>
+
+      {/* Mobile Navigation Dropdown Menu */}
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="md:hidden overflow-hidden bg-[#FAF8F5] border-t border-[#F0EBE5]/50 px-6 py-4 space-y-3 flex flex-col items-start"
+          >
+            {navItems.map((item) => {
+              const isActive = currentPath === item.path;
+              return (
+                <button
+                  key={item.path}
+                  onClick={() => {
+                    navigate(item.path);
+                    setMenuOpen(false);
+                  }}
+                  className={`w-full text-left py-2 text-[15px] font-semibold transition-colors ${
+                    isActive ? "text-[#c67f43]" : "text-[#5E554E] hover:text-[#c67f43]"
+                  }`}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 }

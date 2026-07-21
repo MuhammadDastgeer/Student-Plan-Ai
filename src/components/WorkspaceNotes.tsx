@@ -43,7 +43,8 @@ import {
   ArrowLeftRight,
   X,
   Send,
-  Copy
+  Copy,
+  ChevronLeft
 } from "lucide-react";
 
 interface Note {
@@ -841,7 +842,7 @@ export default function WorkspaceNotes() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
         {/* Left Library Column Sidebar */}
-        <div className={`${showAISidebar ? "lg:col-span-3" : "lg:col-span-4"} bg-white border border-[#EFECE6] rounded-2xl p-4 shadow-2xs space-y-4 text-left transition-all duration-300`}>
+        <div className={`${showAISidebar ? "lg:col-span-3" : "lg:col-span-4"} ${selectedNoteId ? "hidden lg:block" : "block"} bg-white border border-[#EFECE6] rounded-2xl p-4 shadow-2xs space-y-4 text-left transition-all duration-300`}>
           
           <div className="flex items-center justify-between">
             <div 
@@ -1000,10 +1001,18 @@ export default function WorkspaceNotes() {
         </div>
 
         {/* Right Note Editor Area */}
-        <div className={`${showAISidebar ? "lg:col-span-6" : "lg:col-span-8"} bg-white border border-[#EFECE6] rounded-2xl p-6 shadow-2xs text-left space-y-4 transition-all duration-300`}>
+        <div className={`${showAISidebar ? "lg:col-span-6" : "lg:col-span-8"} ${!selectedNoteId ? "hidden lg:block" : "block"} bg-white border border-[#EFECE6] rounded-2xl p-6 shadow-2xs text-left space-y-4 transition-all duration-300`}>
           
           {selectedNote ? (
             <>
+              {/* On mobile: Back to Notes List */}
+              <button 
+                onClick={() => setSelectedNoteId("")}
+                className="flex lg:hidden items-center gap-1.5 text-xs text-[#c67f43] font-bold pb-2 hover:opacity-80 cursor-pointer"
+              >
+                <ChevronLeft className="w-4 h-4" /> Back to Notes List
+              </button>
+
               {/* Trash Restoring warning banner at the top */}
               {selectedNote.isDeleted && (
                 <div className="p-3.5 bg-amber-50/70 border border-amber-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-amber-800 font-semibold text-left">
