@@ -1,9 +1,11 @@
 import { motion } from "motion/react";
 import DashboardMockup from "./DashboardMockup";
 import { useRouter } from "./Router";
+import { useAuth } from "../lib/authStore";
 
 export default function Hero() {
   const { navigate } = useRouter();
+  const { isLoggedIn } = useAuth();
   
   const scrollToSection = (id: string) => {
     const el = document.getElementById(id);
@@ -58,10 +60,10 @@ export default function Hero() {
             className="flex flex-wrap items-center gap-4 w-full"
           >
             <button
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate(isLoggedIn ? "/dashboard" : "/signup")}
               className="bg-[#1C1510] hover:bg-stone-800 text-white font-semibold text-[14px] px-6 py-3 rounded-lg shadow-md transition-all cursor-pointer flex items-center gap-1.5"
             >
-              Start for free <span className="text-base">→</span>
+              {isLoggedIn ? "Go to Workspace" : "Start for free"} <span className="text-base">→</span>
             </button>
             
             <button

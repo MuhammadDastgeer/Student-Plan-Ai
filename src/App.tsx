@@ -12,6 +12,8 @@ import Footer from "./components/Footer";
 import AboutView from "./components/AboutView";
 import PriceView from "./components/PriceView";
 import ContactView from "./components/ContactView";
+import LoginView from "./components/LoginView";
+import SignupView from "./components/SignupView";
 
 // Import Workspace layout and views
 import WorkspaceLayout from "./components/WorkspaceLayout";
@@ -39,9 +41,12 @@ import CollaborateDoubtBoard from "./components/CollaborateDoubtBoard";
 import ResourcesLibrary from "./components/ResourcesLibrary";
 
 import { RouterProvider, Route, useRouter } from "./components/Router";
+import { useAuth } from "./lib/authStore";
+import { useEffect } from "react";
 
 function AppContent() {
-  const { currentPath } = useRouter();
+  const { currentPath, navigate } = useRouter();
+  const { isLoggedIn } = useAuth();
 
   // List of paths that belong to the premium Workspace app
   const workspacePaths = [
@@ -67,7 +72,17 @@ function AppContent() {
 
   const isWorkspace = workspacePaths.includes(currentPath);
 
-  if (isWorkspace) {
+  // Authentication protection & redirect checks
+  useEffect(() => {
+    if (isWorkspace && !isLoggedIn) {
+      navigate("/login");
+    }
+    if ((currentPath === "/login" || currentPath === "/signup") && isLoggedIn) {
+      navigate("/dashboard");
+    }
+  }, [currentPath, isLoggedIn, isWorkspace]);
+
+  if (isWorkspace && isLoggedIn) {
     return (
       <WorkspaceLayout>
         <Route path="/dashboard" element={<WorkspaceDashboard />} />
@@ -118,6 +133,12 @@ function AppContent() {
 
         {/* Contact Route */}
         <Route path="/contact" element={<ContactView />} />
+
+        {/* Login Route */}
+        <Route path="/login" element={<LoginView />} />
+
+        {/* Signup Route */}
+        <Route path="/signup" element={<SignupView />} />
       </main>
       <Footer />
     </div>

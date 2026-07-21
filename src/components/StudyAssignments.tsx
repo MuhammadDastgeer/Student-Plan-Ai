@@ -12,6 +12,7 @@ import {
   FileText,
   Bookmark
 } from "lucide-react";
+import { useAuth } from "../lib/authStore";
 
 interface Assignment {
   id: string;
@@ -24,6 +25,7 @@ interface Assignment {
 }
 
 export default function StudyAssignments() {
+  const { currentUser } = useAuth();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [title, setTitle] = useState("");
   const [subject, setSubject] = useState("");
@@ -37,9 +39,11 @@ export default function StudyAssignments() {
   const [isSolving, setIsSolving] = useState(false);
   const [error, setError] = useState("");
 
+  const storageKey = currentUser ? `flowbase_user_${currentUser.email}_assignments` : "flowbase_assignments";
+
   // Load from local storage
   useEffect(() => {
-    const saved = localStorage.getItem("flowbase_assignments");
+    const saved = localStorage.getItem(storageKey);
     if (saved) {
       try {
         setAssignments(JSON.parse(saved));
@@ -48,13 +52,13 @@ export default function StudyAssignments() {
       }
     } else {
       setAssignments([]);
-      localStorage.setItem("flowbase_assignments", JSON.stringify([]));
+      localStorage.setItem(storageKey, JSON.stringify([]));
     }
-  }, []);
+  }, [storageKey]);
 
   const saveAssignments = (updated: Assignment[]) => {
     setAssignments(updated);
-    localStorage.setItem("flowbase_assignments", JSON.stringify(updated));
+    localStorage.setItem(storageKey, JSON.stringify(updated));
   };
 
   const handleCreateAssignment = (e: React.FormEvent) => {

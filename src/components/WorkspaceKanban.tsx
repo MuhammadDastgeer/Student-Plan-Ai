@@ -16,6 +16,7 @@ import {
   Clock,
   ArrowRightLeft
 } from "lucide-react";
+import { authStore } from "../lib/authStore";
 
 interface Board {
   id: string;
@@ -104,9 +105,15 @@ const COLOR_OPTIONS = [
 ];
 
 export default function WorkspaceKanban() {
+  const currentUser = authStore.getCurrentUser();
+  const boardsKey = currentUser ? `flowbase_user_${currentUser.email}_kanban_boards` : "workspace_kanban_boards";
+  const selectedBoardKey = currentUser ? `flowbase_user_${currentUser.email}_kanban_selected_board` : "workspace_kanban_selected_board";
+  const columnsKey = currentUser ? `flowbase_user_${currentUser.email}_kanban_columns` : "workspace_kanban_columns";
+  const tasksKey = currentUser ? `flowbase_user_${currentUser.email}_kanban_tasks` : "workspace_kanban_tasks";
+
   // Empty states initially or loaded from localStorage
   const [boards, setBoards] = useState<Board[]>(() => {
-    const saved = localStorage.getItem("workspace_kanban_boards");
+    const saved = localStorage.getItem(boardsKey);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -117,9 +124,9 @@ export default function WorkspaceKanban() {
   });
 
   const [selectedBoardId, setSelectedBoardId] = useState<string>(() => {
-    const saved = localStorage.getItem("workspace_kanban_selected_board");
+    const saved = localStorage.getItem(selectedBoardKey);
     if (saved) return saved;
-    const savedBoards = localStorage.getItem("workspace_kanban_boards");
+    const savedBoards = localStorage.getItem(boardsKey);
     if (savedBoards) {
       try {
         const parsed = JSON.parse(savedBoards);
@@ -130,7 +137,7 @@ export default function WorkspaceKanban() {
   });
 
   const [columns, setColumns] = useState<Column[]>(() => {
-    const saved = localStorage.getItem("workspace_kanban_columns");
+    const saved = localStorage.getItem(columnsKey);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -141,7 +148,7 @@ export default function WorkspaceKanban() {
   });
 
   const [tasks, setTasks] = useState<BoardTask[]>(() => {
-    const saved = localStorage.getItem("workspace_kanban_tasks");
+    const saved = localStorage.getItem(tasksKey);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -152,23 +159,23 @@ export default function WorkspaceKanban() {
   });
 
   React.useEffect(() => {
-    localStorage.setItem("workspace_kanban_boards", JSON.stringify(boards));
+    localStorage.setItem(boardsKey, JSON.stringify(boards));
     if (boards.length > 0 && !selectedBoardId) {
       setSelectedBoardId(boards[0].id);
     }
-  }, [boards]);
+  }, [boards, boardsKey]);
 
   React.useEffect(() => {
-    localStorage.setItem("workspace_kanban_selected_board", selectedBoardId);
-  }, [selectedBoardId]);
+    localStorage.setItem(selectedBoardKey, selectedBoardId);
+  }, [selectedBoardId, selectedBoardKey]);
 
   React.useEffect(() => {
-    localStorage.setItem("workspace_kanban_columns", JSON.stringify(columns));
-  }, [columns]);
+    localStorage.setItem(columnsKey, JSON.stringify(columns));
+  }, [columns, columnsKey]);
 
   React.useEffect(() => {
-    localStorage.setItem("workspace_kanban_tasks", JSON.stringify(tasks));
-  }, [tasks]);
+    localStorage.setItem(tasksKey, JSON.stringify(tasks));
+  }, [tasks, tasksKey]);
 
   // Input states for Board creation
   const [newBoardTitle, setNewBoardTitle] = useState("");

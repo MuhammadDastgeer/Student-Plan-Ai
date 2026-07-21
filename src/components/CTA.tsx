@@ -1,8 +1,10 @@
 import { motion } from "motion/react";
 import { useRouter } from "./Router";
+import { useAuth } from "../lib/authStore";
 
 export default function CTA() {
   const { navigate } = useRouter();
+  const { isLoggedIn } = useAuth();
 
   const scrollToSection = (id: string) => {
     const el = document.getElementById(id);
@@ -44,10 +46,10 @@ export default function CTA() {
           {/* Buttons */}
           <div className="flex flex-wrap items-center justify-center gap-4 relative z-10 w-full">
             <button
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate(isLoggedIn ? "/dashboard" : "/signup")}
               className="bg-[#c67f43] hover:bg-[#b06f38] text-white font-semibold text-[14px] px-8 py-3.5 rounded-lg shadow-md transition-all cursor-pointer flex items-center gap-1.5"
             >
-              Start for free <span className="text-base">→</span>
+              {isLoggedIn ? "Go to Workspace" : "Start for free"} <span className="text-base">→</span>
             </button>
             <button
               onClick={() => scrollToSection("features-section")}

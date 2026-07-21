@@ -12,6 +12,7 @@ import {
   CheckCircle,
   GraduationCap
 } from "lucide-react";
+import { useAuth } from "../lib/authStore";
 
 interface GradeComponent {
   id: string;
@@ -28,6 +29,7 @@ interface Course {
 }
 
 export default function StudyGradeTracker() {
+  const { currentUser } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
   const [courseName, setCourseName] = useState("");
   const [credits, setCredits] = useState("3");
@@ -43,15 +45,19 @@ export default function StudyGradeTracker() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState("");
 
+  const storageKey = currentUser ? `flowbase_user_${currentUser.email}_courses` : "flowbase_courses";
+
   // Load from local storage
   useEffect(() => {
-    const saved = localStorage.getItem("flowbase_courses");
+    const saved = localStorage.getItem(storageKey);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
         setCourses(parsed);
         if (parsed.length > 0) {
           setSelectedCourseId(parsed[0].id);
+        } else {
+          setSelectedCourseId("");
         }
       } catch (e) {
         console.error(e);
@@ -59,13 +65,13 @@ export default function StudyGradeTracker() {
     } else {
       setCourses([]);
       setSelectedCourseId("");
-      localStorage.setItem("flowbase_courses", JSON.stringify([]));
+      localStorage.setItem(storageKey, JSON.stringify([]));
     }
-  }, []);
+  }, [storageKey]);
 
   const saveCourses = (updated: Course[]) => {
     setCourses(updated);
-    localStorage.setItem("flowbase_courses", JSON.stringify(updated));
+    localStorage.setItem(storageKey, JSON.stringify(updated));
   };
 
   const handleCreateCourse = (e: React.FormEvent) => {

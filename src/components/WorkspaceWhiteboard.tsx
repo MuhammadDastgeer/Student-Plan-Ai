@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { callOpenAIDiagramGenerate } from "../lib/openaiFallback";
+import { authStore } from "../lib/authStore";
 import { 
   Plus, 
   Trash2, 
@@ -97,9 +98,14 @@ export default function WorkspaceWhiteboard() {
   const canvasRef = useRef<HTMLDivElement>(null);
   const workspaceContainerRef = useRef<HTMLDivElement>(null);
 
+  const currentUser = authStore.getCurrentUser();
+  const listKey = currentUser ? `flowbase_user_${currentUser.email}_whiteboards_list` : "workspace_whiteboards_list";
+  const selectedKey = currentUser ? `flowbase_user_${currentUser.email}_whiteboard_selected_id` : "selected_board_id";
+  const dataKey = currentUser ? `flowbase_user_${currentUser.email}_whiteboards_data` : "workspace_whiteboards_data";
+
   // --- Boards list loaded from LocalStorage ---
   const [boards, setBoards] = useState<Board[]>(() => {
-    const saved = localStorage.getItem("workspace_whiteboards_list");
+    const saved = localStorage.getItem(listKey);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -110,9 +116,9 @@ export default function WorkspaceWhiteboard() {
   });
 
   const [selectedBoard, setSelectedBoard] = useState<string>(() => {
-    const savedSelected = localStorage.getItem("selected_board_id");
+    const savedSelected = localStorage.getItem(selectedKey);
     if (savedSelected) {
-      localStorage.removeItem("selected_board_id");
+      localStorage.removeItem(selectedKey);
       return savedSelected;
     }
     return boards[0]?.id || "";
@@ -120,7 +126,7 @@ export default function WorkspaceWhiteboard() {
 
   // --- Board Data Elements loaded from LocalStorage ---
   const [elementsMap, setElementsMap] = useState<Record<string, WhiteboardElement[]>>(() => {
-    const saved = localStorage.getItem("workspace_whiteboards_data");
+    const saved = localStorage.getItem(dataKey);
     if (saved) {
       try {
         return JSON.parse(saved);
@@ -137,12 +143,12 @@ export default function WorkspaceWhiteboard() {
 
   // Synchronize to LocalStorage
   useEffect(() => {
-    localStorage.setItem("workspace_whiteboards_list", JSON.stringify(boards));
-  }, [boards]);
+    localStorage.setItem(listKey, JSON.stringify(boards));
+  }, [boards, listKey]);
 
   useEffect(() => {
-    localStorage.setItem("workspace_whiteboards_data", JSON.stringify(elementsMap));
-  }, [elementsMap]);
+    localStorage.setItem(dataKey, JSON.stringify(elementsMap));
+  }, [elementsMap, dataKey]);
 
   // Handle board history initiation
   const currentBoardHistory = history[selectedBoard] || [elements];

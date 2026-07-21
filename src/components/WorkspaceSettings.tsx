@@ -17,17 +17,26 @@ import {
   AlertCircle,
   CheckCircle2
 } from "lucide-react";
+import { useAuth, authStore } from "../lib/authStore";
 
 export default function WorkspaceSettings() {
+  const { currentUser } = useAuth();
   const [activeSubTab, setActiveSubTab] = useState<
     "Profile" | "Subscription" | "Categories" | "AI Settings" | "Preferences" | "Privacy"
   >("Profile");
 
   // Profile fields matching screenshot
-  const [profileName, setProfileName] = useState("Saloni Avhad");
-  const [profileEmail, setProfileEmail] = useState("gameplayapp007@gmail.com");
+  const [profileName, setProfileName] = useState(currentUser?.name || "Saloni Avhad");
+  const [profileEmail, setProfileEmail] = useState(currentUser?.email || "gameplayapp007@gmail.com");
   const [isEditing, setIsEditing] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  useEffect(() => {
+    if (currentUser) {
+      setProfileName(currentUser.name);
+      setProfileEmail(currentUser.email);
+    }
+  }, [currentUser]);
 
   // Additional mock values
   const [selectedPlan, setSelectedPlan] = useState("Pro tier Developer");
@@ -65,6 +74,16 @@ export default function WorkspaceSettings() {
 
   const handleProfileSave = (e: React.FormEvent) => {
     e.preventDefault();
+    if (currentUser) {
+      const updatedProfile = { ...currentUser, name: profileName, email: profileEmail };
+      const registered = authStore.getRegisteredUsers();
+      const userRecord = registered[currentUser.email.toLowerCase()];
+      if (userRecord) {
+        userRecord.profile = updatedProfile;
+        localStorage.setItem("flowbase_registered_users", JSON.stringify(registered));
+      }
+      authStore.setCurrentUser(updatedProfile);
+    }
     setIsEditing(false);
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 2500);

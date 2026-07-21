@@ -14,6 +14,7 @@ import {
   Check,
   ChevronRight
 } from "lucide-react";
+import { useAuth } from "../lib/authStore";
 
 interface Doubt {
   id: string;
@@ -26,6 +27,7 @@ interface Doubt {
 }
 
 export default function CollaborateDoubtBoard() {
+  const { currentUser } = useAuth();
   const [doubts, setDoubts] = useState<Doubt[]>([]);
   const [selectedDoubtId, setSelectedDoubtId] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -39,15 +41,19 @@ export default function CollaborateDoubtBoard() {
   const [isSolving, setIsSolving] = useState(false);
   const [error, setError] = useState("");
 
+  const storageKey = currentUser ? `flowbase_user_${currentUser.email}_doubts` : "flowbase_doubts";
+
   // Load from local storage
   useEffect(() => {
-    const saved = localStorage.getItem("flowbase_doubts");
+    const saved = localStorage.getItem(storageKey);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
         setDoubts(parsed);
         if (parsed.length > 0) {
           setSelectedDoubtId(parsed[0].id);
+        } else {
+          setSelectedDoubtId("");
         }
       } catch (e) {
         console.error(e);
@@ -55,13 +61,13 @@ export default function CollaborateDoubtBoard() {
     } else {
       setDoubts([]);
       setSelectedDoubtId("");
-      localStorage.setItem("flowbase_doubts", JSON.stringify([]));
+      localStorage.setItem(storageKey, JSON.stringify([]));
     }
-  }, []);
+  }, [storageKey]);
 
   const saveDoubts = (updated: Doubt[]) => {
     setDoubts(updated);
-    localStorage.setItem("flowbase_doubts", JSON.stringify(updated));
+    localStorage.setItem(storageKey, JSON.stringify(updated));
   };
 
   const handleCreateDoubt = (e: React.FormEvent) => {

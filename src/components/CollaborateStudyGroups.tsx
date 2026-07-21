@@ -14,6 +14,7 @@ import {
   MapPin,
   Send
 } from "lucide-react";
+import { useAuth } from "../lib/authStore";
 
 interface StudyGroup {
   id: string;
@@ -34,6 +35,7 @@ interface DiscussionMessage {
 }
 
 export default function CollaborateStudyGroups() {
+  const { currentUser } = useAuth();
   const [groups, setGroups] = useState<StudyGroup[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState("");
   
@@ -50,10 +52,13 @@ export default function CollaborateStudyGroups() {
   const [isAiThinking, setIsAiThinking] = useState(false);
   const [error, setError] = useState("");
 
+  const groupsKey = currentUser ? `flowbase_user_${currentUser.email}_study_groups` : "flowbase_study_groups";
+  const messagesKey = currentUser ? `flowbase_user_${currentUser.email}_study_group_msgs` : "flowbase_study_group_msgs";
+
   // Load from Local Storage
   useEffect(() => {
-    const savedGroups = localStorage.getItem("flowbase_study_groups");
-    const savedMessages = localStorage.getItem("flowbase_study_group_msgs");
+    const savedGroups = localStorage.getItem(groupsKey);
+    const savedMessages = localStorage.getItem(messagesKey);
 
     if (savedGroups) {
       try {
@@ -61,6 +66,8 @@ export default function CollaborateStudyGroups() {
         setGroups(parsed);
         if (parsed.length > 0) {
           setSelectedGroupId(parsed[0].id);
+        } else {
+          setSelectedGroupId("");
         }
       } catch (e) {
         console.error(e);
@@ -68,7 +75,7 @@ export default function CollaborateStudyGroups() {
     } else {
       setGroups([]);
       setSelectedGroupId("");
-      localStorage.setItem("flowbase_study_groups", JSON.stringify([]));
+      localStorage.setItem(groupsKey, JSON.stringify([]));
     }
 
     if (savedMessages) {
@@ -79,18 +86,18 @@ export default function CollaborateStudyGroups() {
       }
     } else {
       setMessages({});
-      localStorage.setItem("flowbase_study_group_msgs", JSON.stringify({}));
+      localStorage.setItem(messagesKey, JSON.stringify({}));
     }
-  }, []);
+  }, [groupsKey, messagesKey]);
 
   const saveGroups = (updated: StudyGroup[]) => {
     setGroups(updated);
-    localStorage.setItem("flowbase_study_groups", JSON.stringify(updated));
+    localStorage.setItem(groupsKey, JSON.stringify(updated));
   };
 
   const saveMessages = (updatedMsgs: Record<string, DiscussionMessage[]>) => {
     setMessages(updatedMsgs);
-    localStorage.setItem("flowbase_study_group_msgs", JSON.stringify(updatedMsgs));
+    localStorage.setItem(messagesKey, JSON.stringify(updatedMsgs));
   };
 
   const handleCreateGroup = (e: React.FormEvent) => {

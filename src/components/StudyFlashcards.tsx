@@ -13,6 +13,7 @@ import {
   AlertCircle,
   FolderOpen
 } from "lucide-react";
+import { useAuth } from "../lib/authStore";
 
 interface Flashcard {
   id: string;
@@ -28,6 +29,7 @@ interface FlashcardDeck {
 }
 
 export default function StudyFlashcards() {
+  const { currentUser } = useAuth();
   const [decks, setDecks] = useState<FlashcardDeck[]>([]);
   const [selectedDeckId, setSelectedDeckId] = useState("");
   const [newDeckName, setNewDeckName] = useState("");
@@ -43,15 +45,19 @@ export default function StudyFlashcards() {
   const [newFront, setNewFront] = useState("");
   const [newBack, setNewBack] = useState("");
 
+  const storageKey = currentUser ? `flowbase_user_${currentUser.email}_flashcards` : "flowbase_flashcards";
+
   // Load from Local Storage
   useEffect(() => {
-    const saved = localStorage.getItem("flowbase_flashcards");
+    const saved = localStorage.getItem(storageKey);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
         setDecks(parsed);
         if (parsed.length > 0) {
           setSelectedDeckId(parsed[0].id);
+        } else {
+          setSelectedDeckId("");
         }
       } catch (e) {
         console.error(e);
@@ -59,13 +65,13 @@ export default function StudyFlashcards() {
     } else {
       setDecks([]);
       setSelectedDeckId("");
-      localStorage.setItem("flowbase_flashcards", JSON.stringify([]));
+      localStorage.setItem(storageKey, JSON.stringify([]));
     }
-  }, []);
+  }, [storageKey]);
 
   const saveDecks = (updatedDecks: FlashcardDeck[]) => {
     setDecks(updatedDecks);
-    localStorage.setItem("flowbase_flashcards", JSON.stringify(updatedDecks));
+    localStorage.setItem(storageKey, JSON.stringify(updatedDecks));
   };
 
   const handleCreateDeck = (e: React.FormEvent) => {

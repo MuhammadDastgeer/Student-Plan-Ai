@@ -23,6 +23,7 @@ import {
   ExternalLink
 } from "lucide-react";
 import { useRouter } from "./Router";
+import { authStore } from "../lib/authStore";
 
 interface WorkspaceSpace {
   id: string;
@@ -35,10 +36,14 @@ interface WorkspaceSpace {
 
 export default function WorkspaceSpaces() {
   const { navigate } = useRouter();
+  const currentUser = authStore.getCurrentUser();
+  const spacesKey = currentUser ? `flowbase_user_${currentUser.email}_spaces` : "workspace_spaces";
+  const notesKey = currentUser ? `flowbase_user_${currentUser.email}_notes` : "workspace_notes";
+  const whiteboardsListKey = currentUser ? `flowbase_user_${currentUser.email}_whiteboards_list` : "workspace_whiteboards_list";
 
   // Load spaces from localStorage. Start completely empty by default as requested.
   const [spaces, setSpaces] = useState<WorkspaceSpace[]>(() => {
-    const saved = localStorage.getItem("workspace_spaces");
+    const saved = localStorage.getItem(spacesKey);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -55,12 +60,12 @@ export default function WorkspaceSpaces() {
 
   // Load notes and whiteboards from localStorage to show their counts and link them to spaces
   const [allNotes, setAllNotes] = useState<any[]>(() => {
-    const saved = localStorage.getItem("workspace_notes");
+    const saved = localStorage.getItem(notesKey);
     return saved ? JSON.parse(saved) : [];
   });
 
   const [allBoards, setAllBoards] = useState<any[]>(() => {
-    const saved = localStorage.getItem("workspace_whiteboards_list");
+    const saved = localStorage.getItem(whiteboardsListKey);
     return saved ? JSON.parse(saved) : [];
   });
 
@@ -80,7 +85,7 @@ export default function WorkspaceSpaces() {
   // Save spaces list to localStorage
   const saveSpaces = (updated: WorkspaceSpace[]) => {
     setSpaces(updated);
-    localStorage.setItem("workspace_spaces", JSON.stringify(updated));
+    localStorage.setItem(spacesKey, JSON.stringify(updated));
   };
 
   const handleCreateSpace = (e: React.FormEvent) => {

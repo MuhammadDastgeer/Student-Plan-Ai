@@ -13,6 +13,7 @@ import {
   History,
   AlertCircle
 } from "lucide-react";
+import { useAuth } from "../lib/authStore";
 
 interface FocusSession {
   id: string;
@@ -22,6 +23,7 @@ interface FocusSession {
 }
 
 export default function StudyFocusTimer() {
+  const { currentUser } = useAuth();
   // Timer States
   const [minutes, setMinutes] = useState(25);
   const [seconds, setSeconds] = useState(0);
@@ -47,21 +49,25 @@ export default function StudyFocusTimer() {
   // Interval reference
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  const storageKey = currentUser ? `flowbase_user_${currentUser.email}_focus_history` : "flowbase_focus_history";
+
   // Load history from local storage
   useEffect(() => {
-    const saved = localStorage.getItem("flowbase_focus_history");
+    const saved = localStorage.getItem(storageKey);
     if (saved) {
       try {
         setHistory(JSON.parse(saved));
       } catch (e) {
         console.error(e);
       }
+    } else {
+      setHistory([]);
     }
-  }, []);
+  }, [storageKey]);
 
   const saveHistory = (newHistory: FocusSession[]) => {
     setHistory(newHistory);
-    localStorage.setItem("flowbase_focus_history", JSON.stringify(newHistory));
+    localStorage.setItem(storageKey, JSON.stringify(newHistory));
   };
 
   // Timer logic

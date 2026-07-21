@@ -15,6 +15,7 @@ import {
   ExternalLink,
   Tag
 } from "lucide-react";
+import { useAuth } from "../lib/authStore";
 
 interface Resource {
   id: string;
@@ -27,6 +28,7 @@ interface Resource {
 }
 
 export default function ResourcesLibrary() {
+  const { currentUser } = useAuth();
   const [resources, setResources] = useState<Resource[]>([]);
   const [selectedResourceId, setSelectedResourceId] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -45,15 +47,19 @@ export default function ResourcesLibrary() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState("");
 
+  const storageKey = currentUser ? `flowbase_user_${currentUser.email}_resources` : "flowbase_resources";
+
   // Load from local storage
   useEffect(() => {
-    const saved = localStorage.getItem("flowbase_resources");
+    const saved = localStorage.getItem(storageKey);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
         setResources(parsed);
         if (parsed.length > 0) {
           setSelectedResourceId(parsed[0].id);
+        } else {
+          setSelectedResourceId("");
         }
       } catch (e) {
         console.error(e);
@@ -61,13 +67,13 @@ export default function ResourcesLibrary() {
     } else {
       setResources([]);
       setSelectedResourceId("");
-      localStorage.setItem("flowbase_resources", JSON.stringify([]));
+      localStorage.setItem(storageKey, JSON.stringify([]));
     }
-  }, []);
+  }, [storageKey]);
 
   const saveResources = (updated: Resource[]) => {
     setResources(updated);
-    localStorage.setItem("flowbase_resources", JSON.stringify(updated));
+    localStorage.setItem(storageKey, JSON.stringify(updated));
   };
 
   const handleCreateResource = (e: React.FormEvent) => {

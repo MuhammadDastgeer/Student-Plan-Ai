@@ -39,6 +39,7 @@ import {
   Award,
   Smile
 } from "lucide-react";
+import { authStore } from "../lib/authStore";
 
 interface Applet {
   id: string;
@@ -64,16 +65,20 @@ export default function WorkspaceApps() {
   const [searchQuery, setSearchQuery] = useState("");
   const [runningApp, setRunningApp] = useState<string | null>(null);
 
+  const currentUser = authStore.getCurrentUser();
+  const installedAppsKey = currentUser ? `flowbase_user_${currentUser.email}_installed_apps` : "workspace_installed_apps";
+  const habitsKey = currentUser ? `flowbase_user_${currentUser.email}_apps_habits` : "workspace_apps_habits";
+
   // App List Status (saved in localStorage)
   const [installedAppIds, setInstalledAppIds] = useState<string[]>(() => {
-    const saved = localStorage.getItem("workspace_installed_apps");
+    const saved = localStorage.getItem(installedAppsKey);
     return saved ? JSON.parse(saved) : ["pomodoro", "calculator", "habits"];
   });
 
   // Save installed app IDs
   useEffect(() => {
-    localStorage.setItem("workspace_installed_apps", JSON.stringify(installedAppIds));
-  }, [installedAppIds]);
+    localStorage.setItem(installedAppsKey, JSON.stringify(installedAppIds));
+  }, [installedAppIds, installedAppsKey]);
 
   // Pomodoro States
   const [pomoTimeLeft, setPomoTimeLeft] = useState(1500); // 25 mins
@@ -86,22 +91,18 @@ export default function WorkspaceApps() {
   const [calcHistory, setCalcHistory] = useState<string[]>([]);
   const [calcClearNext, setCalcClearNext] = useState(false);
 
-  // Habit Tracker States
+  // Habit Tracker States - Start completely empty by default
   const [habits, setHabits] = useState<Habit[]>(() => {
-    const saved = localStorage.getItem("workspace_apps_habits");
-    return saved ? JSON.parse(saved) : [
-      { id: "1", name: "Drink 3L water", streak: 4, completedToday: true, createdAt: new Date().toISOString() },
-      { id: "2", name: "Read 10 pages", streak: 2, completedToday: false, createdAt: new Date().toISOString() },
-      { id: "3", name: "Write code", streak: 7, completedToday: true, createdAt: new Date().toISOString() }
-    ];
+    const saved = localStorage.getItem(habitsKey);
+    return saved ? JSON.parse(saved) : [];
   });
 
   const [newHabitName, setNewHabitName] = useState("");
 
   // Save Habits
   useEffect(() => {
-    localStorage.setItem("workspace_apps_habits", JSON.stringify(habits));
-  }, [habits]);
+    localStorage.setItem(habitsKey, JSON.stringify(habits));
+  }, [habits, habitsKey]);
 
   // Markdown Sandbox State
   const [mdContent, setMdContent] = useState("# Hello World\nWrite some markdown here to preview it dynamically...");

@@ -18,6 +18,7 @@ import {
   Laptop
 } from "lucide-react";
 import { useRouter } from "./Router";
+import { authStore } from "../lib/authStore";
 
 interface Board {
   id: string;
@@ -90,6 +91,17 @@ interface WorkspaceSpace {
 export default function WorkspaceDashboard() {
   const { navigate } = useRouter();
 
+  const currentUser = authStore.getCurrentUser();
+  const calendarKey = currentUser ? `flowbase_user_${currentUser.email}_calendar_tasks` : "workspace_calendar_tasks";
+  const boardsKey = currentUser ? `flowbase_user_${currentUser.email}_kanban_boards` : "workspace_kanban_boards";
+  const columnsKey = currentUser ? `flowbase_user_${currentUser.email}_kanban_columns` : "workspace_kanban_columns";
+  const kanbanTasksKey = currentUser ? `flowbase_user_${currentUser.email}_kanban_tasks` : "workspace_kanban_tasks";
+  const notesKey = currentUser ? `flowbase_user_${currentUser.email}_notes` : "workspace_notes";
+  const whiteboardsKey = currentUser ? `flowbase_user_${currentUser.email}_whiteboards_list` : "workspace_whiteboards_list";
+  const spacesKey = currentUser ? `flowbase_user_${currentUser.email}_spaces` : "workspace_spaces";
+  const templatesKey = currentUser ? `flowbase_user_${currentUser.email}_templates` : "workspace_templates";
+  const chatKey = currentUser ? `flowbase_user_${currentUser.email}_cozy_ai_chat_history` : "cozy_ai_chat_history";
+
   // Dynamic Workspace States
   const [tasks, setTasks] = useState<BoardTask[]>([]);
   const [columns, setColumns] = useState<Column[]>([]);
@@ -103,32 +115,38 @@ export default function WorkspaceDashboard() {
   // Load everything from local storage on mount
   useEffect(() => {
     // 1. Kanban
-    const savedTasks = localStorage.getItem("workspace_kanban_tasks");
-    const savedColumns = localStorage.getItem("workspace_kanban_columns");
+    const savedTasks = localStorage.getItem(kanbanTasksKey);
+    const savedColumns = localStorage.getItem(columnsKey);
     if (savedTasks) {
       try {
         const parsed = JSON.parse(savedTasks);
         if (Array.isArray(parsed)) setTasks(parsed);
       } catch (e) {}
+    } else {
+      setTasks([]);
     }
     if (savedColumns) {
       try {
         const parsed = JSON.parse(savedColumns);
         if (Array.isArray(parsed)) setColumns(parsed);
       } catch (e) {}
+    } else {
+      setColumns([]);
     }
 
     // 2. Calendar
-    const savedCalendar = localStorage.getItem("workspace_calendar_tasks");
+    const savedCalendar = localStorage.getItem(calendarKey);
     if (savedCalendar) {
       try {
         const parsed = JSON.parse(savedCalendar);
         if (Array.isArray(parsed)) setCalendarTasks(parsed);
       } catch (e) {}
+    } else {
+      setCalendarTasks([]);
     }
 
     // 3. Notes
-    const savedNotes = localStorage.getItem("workspace_notes");
+    const savedNotes = localStorage.getItem(notesKey);
     if (savedNotes) {
       try {
         const parsed = JSON.parse(savedNotes);
@@ -137,44 +155,54 @@ export default function WorkspaceDashboard() {
           setNotes(parsed.filter(n => !n.isDeleted));
         }
       } catch (e) {}
+    } else {
+      setNotes([]);
     }
 
     // 4. Whiteboards
-    const savedWhiteboards = localStorage.getItem("workspace_whiteboards_list");
+    const savedWhiteboards = localStorage.getItem(whiteboardsKey);
     if (savedWhiteboards) {
       try {
         const parsed = JSON.parse(savedWhiteboards);
         if (Array.isArray(parsed)) setWhiteboards(parsed);
       } catch (e) {}
+    } else {
+      setWhiteboards([]);
     }
 
     // 5. AI Templates
-    const savedTemplates = localStorage.getItem("workspace_templates");
+    const savedTemplates = localStorage.getItem(templatesKey);
     if (savedTemplates) {
       try {
         const parsed = JSON.parse(savedTemplates);
         if (Array.isArray(parsed)) setTemplates(parsed);
       } catch (e) {}
+    } else {
+      setTemplates([]);
     }
 
     // 6. Spaces
-    const savedSpaces = localStorage.getItem("workspace_spaces");
+    const savedSpaces = localStorage.getItem(spacesKey);
     if (savedSpaces) {
       try {
         const parsed = JSON.parse(savedSpaces);
         if (Array.isArray(parsed)) setSpaces(parsed);
       } catch (e) {}
+    } else {
+      setSpaces([]);
     }
 
     // 7. AI Chat messages
-    const savedChat = localStorage.getItem("cozy_ai_chat_history");
+    const savedChat = localStorage.getItem(chatKey);
     if (savedChat) {
       try {
         const parsed = JSON.parse(savedChat);
         if (Array.isArray(parsed)) setChatMessagesCount(parsed.length);
       } catch (e) {}
+    } else {
+      setChatMessagesCount(0);
     }
-  }, []);
+  }, [calendarKey, boardsKey, columnsKey, kanbanTasksKey, notesKey, whiteboardsKey, spacesKey, templatesKey, chatKey]);
 
   // Compute Task stats
   const todayStr = new Date().toISOString().split("T")[0]; // YYYY-MM-DD

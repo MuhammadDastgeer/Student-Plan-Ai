@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { callOpenAINotesAI } from "../lib/openaiFallback";
+import { authStore } from "../lib/authStore";
 import { 
   Plus, 
   Trash2, 
@@ -58,10 +59,14 @@ interface Note {
 }
 
 export default function WorkspaceNotes() {
+  const currentUser = authStore.getCurrentUser();
+  const notesKey = currentUser ? `flowbase_user_${currentUser.email}_notes` : "workspace_notes";
+  const selectedNoteKey = currentUser ? `flowbase_user_${currentUser.email}_selected_note_id` : "selected_note_id";
+
   // Load notes from localStorage on mount.
   // Initially, there are no default pre-written notes ("pale say kuch b written ni ho").
   const [notes, setNotes] = useState<Note[]>(() => {
-    const saved = localStorage.getItem("workspace_notes");
+    const saved = localStorage.getItem(notesKey);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -74,12 +79,12 @@ export default function WorkspaceNotes() {
   });
 
   const [selectedNoteId, setSelectedNoteId] = useState<string>(() => {
-    const savedSelected = localStorage.getItem("selected_note_id");
+    const savedSelected = localStorage.getItem(selectedNoteKey);
     if (savedSelected) {
-      localStorage.removeItem("selected_note_id");
+      localStorage.removeItem(selectedNoteKey);
       return savedSelected;
     }
-    const saved = localStorage.getItem("workspace_notes");
+    const saved = localStorage.getItem(notesKey);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -388,7 +393,7 @@ export default function WorkspaceNotes() {
           wordCount: words,
           updatedAt: "Just now"
         } : n);
-        localStorage.setItem("workspace_notes", JSON.stringify(updated));
+        localStorage.setItem(notesKey, JSON.stringify(updated));
         return updated;
       });
 
@@ -411,7 +416,7 @@ export default function WorkspaceNotes() {
 
   // Synchronize with localStorage on every notes modification
   const saveToLocalStorage = (updatedNotes: Note[]) => {
-    localStorage.setItem("workspace_notes", JSON.stringify(updatedNotes));
+    localStorage.setItem(notesKey, JSON.stringify(updatedNotes));
   };
 
   const handleCreateNote = () => {

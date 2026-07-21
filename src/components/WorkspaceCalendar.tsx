@@ -12,6 +12,7 @@ import {
   Check,
   AlertCircle
 } from "lucide-react";
+import { authStore } from "../lib/authStore";
 
 interface CalendarTask {
   id: string;
@@ -37,9 +38,12 @@ export default function WorkspaceCalendar() {
 
   const todayStr = formatDateStr(new Date());
 
+  const currentUser = authStore.getCurrentUser();
+  const storageKey = currentUser ? `flowbase_user_${currentUser.email}_calendar_tasks` : "workspace_calendar_tasks";
+
   // Unified state for all tasks (Active & Draft) loaded from localStorage
   const [tasks, setTasks] = useState<CalendarTask[]>(() => {
-    const saved = localStorage.getItem("workspace_calendar_tasks");
+    const saved = localStorage.getItem(storageKey);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -52,8 +56,8 @@ export default function WorkspaceCalendar() {
   });
 
   React.useEffect(() => {
-    localStorage.setItem("workspace_calendar_tasks", JSON.stringify(tasks));
-  }, [tasks]);
+    localStorage.setItem(storageKey, JSON.stringify(tasks));
+  }, [tasks, storageKey]);
 
   const [newDraftText, setNewDraftText] = useState("");
   

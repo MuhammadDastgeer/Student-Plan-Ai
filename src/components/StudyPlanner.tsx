@@ -13,6 +13,7 @@ import {
   ChevronRight,
   ListTodo
 } from "lucide-react";
+import { useAuth } from "../lib/authStore";
 
 interface StudyTask {
   id: string;
@@ -32,6 +33,7 @@ interface StudyPlan {
 }
 
 export default function StudyPlanner() {
+  const { currentUser } = useAuth();
   const [plans, setPlans] = useState<StudyPlan[]>([]);
   const [subject, setSubject] = useState("");
   const [examDate, setExamDate] = useState("");
@@ -42,26 +44,33 @@ export default function StudyPlanner() {
   const [error, setError] = useState("");
   const [selectedPlanId, setSelectedPlanId] = useState<string>("");
 
+  const storageKey = currentUser ? `flowbase_user_${currentUser.email}_study_plans` : "flowbase_study_plans";
+
   // Load plans from local storage
   useEffect(() => {
-    const saved = localStorage.getItem("flowbase_study_plans");
+    const saved = localStorage.getItem(storageKey);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
         setPlans(parsed);
         if (parsed.length > 0) {
           setSelectedPlanId(parsed[0].id);
+        } else {
+          setSelectedPlanId("");
         }
       } catch (e) {
         console.error(e);
       }
+    } else {
+      setPlans([]);
+      setSelectedPlanId("");
     }
-  }, []);
+  }, [storageKey]);
 
   // Save plans to local storage
   const savePlans = (newPlans: StudyPlan[]) => {
     setPlans(newPlans);
-    localStorage.setItem("flowbase_study_plans", JSON.stringify(newPlans));
+    localStorage.setItem(storageKey, JSON.stringify(newPlans));
   };
 
   // Helper to query OpenAI

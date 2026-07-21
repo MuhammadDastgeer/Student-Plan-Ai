@@ -3,11 +3,28 @@ import { motion, AnimatePresence } from "motion/react";
 import { Sparkles, Calendar, Plus, Bot, MessageSquare, Send, Mic, Trash2, CheckCircle2, AlertCircle, FolderPlus, HelpCircle } from "lucide-react";
 import { useRouter } from "./Router";
 import { callOpenAINotesAI } from "../lib/openaiFallback";
+import { authStore } from "../lib/authStore";
 
 export default function WorkspaceAIAssistant() {
   const { navigate } = useRouter();
+  const currentUser = authStore.getCurrentUser();
+  const chatKey = currentUser ? `flowbase_user_${currentUser.email}_cozy_ai_chat_history` : "cozy_ai_chat_history";
+
+  const calendarKey = currentUser ? `flowbase_user_${currentUser.email}_calendar_tasks` : "workspace_calendar_tasks";
+  const boardsKey = currentUser ? `flowbase_user_${currentUser.email}_kanban_boards` : "workspace_kanban_boards";
+  const columnsKey = currentUser ? `flowbase_user_${currentUser.email}_kanban_columns` : "workspace_kanban_columns";
+  const kanbanTasksKey = currentUser ? `flowbase_user_${currentUser.email}_kanban_tasks` : "workspace_kanban_tasks";
+  const notesKey = currentUser ? `flowbase_user_${currentUser.email}_notes` : "workspace_notes";
+  const whiteboardsKey = currentUser ? `flowbase_user_${currentUser.email}_whiteboards_list` : "workspace_whiteboards_list";
+  const whiteboardDataKey = currentUser ? `flowbase_user_${currentUser.email}_whiteboards_data` : "workspace_whiteboards_data";
+  const spacesKey = currentUser ? `flowbase_user_${currentUser.email}_spaces` : "workspace_spaces";
+  const studyGroupsKey = currentUser ? `flowbase_user_${currentUser.email}_study_groups` : "flowbase_study_groups";
+  const doubtsKey = currentUser ? `flowbase_user_${currentUser.email}_doubts` : "flowbase_doubts";
+  const resourcesKey = currentUser ? `flowbase_user_${currentUser.email}_resources` : "flowbase_resources";
+  const studyGroupMsgsKey = currentUser ? `flowbase_user_${currentUser.email}_study_group_msgs` : "flowbase_study_group_msgs";
+
   const [messages, setMessages] = useState<Array<{ sender: "user" | "ai"; text: string; date: string }>>(() => {
-    const saved = localStorage.getItem("cozy_ai_chat_history");
+    const saved = localStorage.getItem(chatKey);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -26,8 +43,8 @@ export default function WorkspaceAIAssistant() {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    localStorage.setItem("cozy_ai_chat_history", JSON.stringify(messages.slice(-200)));
-  }, [messages]);
+    localStorage.setItem(chatKey, JSON.stringify(messages.slice(-200)));
+  }, [messages, chatKey]);
 
   const prompts = [
     "Create a study group called Calc Warriors for Mathematics",
@@ -43,17 +60,29 @@ export default function WorkspaceAIAssistant() {
   };
 
   const getWorkspaceContext = (): string => {
-    const calendar = localStorage.getItem("workspace_calendar_tasks");
-    const boards = localStorage.getItem("workspace_kanban_boards");
-    const columns = localStorage.getItem("workspace_kanban_columns");
-    const kanbanTasks = localStorage.getItem("workspace_kanban_tasks");
-    const notes = localStorage.getItem("workspace_notes");
-    const whiteboards = localStorage.getItem("workspace_whiteboards_list");
-    const whiteboardData = localStorage.getItem("workspace_whiteboards_data");
-    const spaces = localStorage.getItem("workspace_spaces");
-    const studyGroups = localStorage.getItem("flowbase_study_groups");
-    const doubts = localStorage.getItem("flowbase_doubts");
-    const resources = localStorage.getItem("flowbase_resources");
+    const calendarKey = currentUser ? `flowbase_user_${currentUser.email}_calendar_tasks` : "workspace_calendar_tasks";
+    const boardsKey = currentUser ? `flowbase_user_${currentUser.email}_kanban_boards` : "workspace_kanban_boards";
+    const columnsKey = currentUser ? `flowbase_user_${currentUser.email}_kanban_columns` : "workspace_kanban_columns";
+    const kanbanTasksKey = currentUser ? `flowbase_user_${currentUser.email}_kanban_tasks` : "workspace_kanban_tasks";
+    const notesKey = currentUser ? `flowbase_user_${currentUser.email}_notes` : "workspace_notes";
+    const whiteboardsKey = currentUser ? `flowbase_user_${currentUser.email}_whiteboards_list` : "workspace_whiteboards_list";
+    const whiteboardDataKey = currentUser ? `flowbase_user_${currentUser.email}_whiteboards_data` : "workspace_whiteboards_data";
+    const spacesKey = currentUser ? `flowbase_user_${currentUser.email}_spaces` : "workspace_spaces";
+    const studyGroupsKey = currentUser ? `flowbase_user_${currentUser.email}_study_groups` : "flowbase_study_groups";
+    const doubtsKey = currentUser ? `flowbase_user_${currentUser.email}_doubts` : "flowbase_doubts";
+    const resourcesKey = currentUser ? `flowbase_user_${currentUser.email}_resources` : "flowbase_resources";
+
+    const calendar = localStorage.getItem(calendarKey);
+    const boards = localStorage.getItem(boardsKey);
+    const columns = localStorage.getItem(columnsKey);
+    const kanbanTasks = localStorage.getItem(kanbanTasksKey);
+    const notes = localStorage.getItem(notesKey);
+    const whiteboards = localStorage.getItem(whiteboardsKey);
+    const whiteboardData = localStorage.getItem(whiteboardDataKey);
+    const spaces = localStorage.getItem(spacesKey);
+    const studyGroups = localStorage.getItem(studyGroupsKey);
+    const doubts = localStorage.getItem(doubtsKey);
+    const resources = localStorage.getItem(resourcesKey);
 
     let context = "CURRENT WORKSPACE STATE & DETAILED RECORDS:\n\n";
     
@@ -307,6 +336,58 @@ export default function WorkspaceAIAssistant() {
 
   const handleExecuteAction = () => {
     if (!pendingAction) return;
+
+    // LocalStorage override for user-isolated sessions
+    const localStorage = {
+      getItem: (key: string): string | null => {
+        let activeKey = key;
+        if (key === "workspace_calendar_tasks") activeKey = calendarKey;
+        else if (key === "workspace_kanban_boards") activeKey = boardsKey;
+        else if (key === "workspace_kanban_columns") activeKey = columnsKey;
+        else if (key === "workspace_kanban_tasks") activeKey = kanbanTasksKey;
+        else if (key === "workspace_notes") activeKey = notesKey;
+        else if (key === "workspace_whiteboards_list") activeKey = whiteboardsKey;
+        else if (key === "workspace_whiteboards_data") activeKey = whiteboardDataKey;
+        else if (key === "workspace_spaces") activeKey = spacesKey;
+        else if (key === "flowbase_study_groups") activeKey = studyGroupsKey;
+        else if (key === "flowbase_doubts") activeKey = doubtsKey;
+        else if (key === "flowbase_resources") activeKey = resourcesKey;
+        else if (key === "flowbase_study_group_msgs") activeKey = studyGroupMsgsKey;
+        return window.localStorage.getItem(activeKey);
+      },
+      setItem: (key: string, value: string): void => {
+        let activeKey = key;
+        if (key === "workspace_calendar_tasks") activeKey = calendarKey;
+        else if (key === "workspace_kanban_boards") activeKey = boardsKey;
+        else if (key === "workspace_kanban_columns") activeKey = columnsKey;
+        else if (key === "workspace_kanban_tasks") activeKey = kanbanTasksKey;
+        else if (key === "workspace_notes") activeKey = notesKey;
+        else if (key === "workspace_whiteboards_list") activeKey = whiteboardsKey;
+        else if (key === "workspace_whiteboards_data") activeKey = whiteboardDataKey;
+        else if (key === "workspace_spaces") activeKey = spacesKey;
+        else if (key === "flowbase_study_groups") activeKey = studyGroupsKey;
+        else if (key === "flowbase_doubts") activeKey = doubtsKey;
+        else if (key === "flowbase_resources") activeKey = resourcesKey;
+        else if (key === "flowbase_study_group_msgs") activeKey = studyGroupMsgsKey;
+        window.localStorage.setItem(activeKey, value);
+      },
+      removeItem: (key: string): void => {
+        let activeKey = key;
+        if (key === "workspace_calendar_tasks") activeKey = calendarKey;
+        else if (key === "workspace_kanban_boards") activeKey = boardsKey;
+        else if (key === "workspace_kanban_columns") activeKey = columnsKey;
+        else if (key === "workspace_kanban_tasks") activeKey = kanbanTasksKey;
+        else if (key === "workspace_notes") activeKey = notesKey;
+        else if (key === "workspace_whiteboards_list") activeKey = whiteboardsKey;
+        else if (key === "workspace_whiteboards_data") activeKey = whiteboardDataKey;
+        else if (key === "workspace_spaces") activeKey = spacesKey;
+        else if (key === "flowbase_study_groups") activeKey = studyGroupsKey;
+        else if (key === "flowbase_doubts") activeKey = doubtsKey;
+        else if (key === "flowbase_resources") activeKey = resourcesKey;
+        else if (key === "flowbase_study_group_msgs") activeKey = studyGroupMsgsKey;
+        window.localStorage.removeItem(activeKey);
+      }
+    };
 
     try {
       const type = pendingAction.type;
