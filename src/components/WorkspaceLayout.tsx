@@ -16,7 +16,8 @@ import {
   ChevronDown, 
   AlertCircle,
   Home,
-  MessageSquare
+  MessageSquare,
+  Cpu
 } from "lucide-react";
 import { useRouter } from "./Router";
 
@@ -52,6 +53,7 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
       section: "BUILD",
       items: [
         { label: "AI Template Builder", icon: Wrench, path: "/template-builder" },
+        { label: "Apps & Tools", icon: Cpu, path: "/apps" },
         { label: "Settings", icon: SettingsIcon, path: "/settings" },
       ]
     }

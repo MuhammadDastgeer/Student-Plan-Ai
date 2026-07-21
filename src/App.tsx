@@ -24,6 +24,7 @@ import WorkspaceWhiteboard from "./components/WorkspaceWhiteboard";
 import WorkspaceSpaces from "./components/WorkspaceSpaces";
 import WorkspaceTemplateBuilder from "./components/WorkspaceTemplateBuilder";
 import WorkspaceSettings from "./components/WorkspaceSettings";
+import WorkspaceApps from "./components/WorkspaceApps";
 
 import { RouterProvider, Route, useRouter } from "./components/Router";
 
@@ -40,7 +41,8 @@ function AppContent() {
     "/whiteboard",
     "/spaces",
     "/template-builder",
-    "/settings"
+    "/settings",
+    "/apps"
   ];
 
   const isWorkspace = workspacePaths.includes(currentPath);
@@ -57,6 +59,7 @@ function AppContent() {
         <Route path="/spaces" element={<WorkspaceSpaces />} />
         <Route path="/template-builder" element={<WorkspaceTemplateBuilder />} />
         <Route path="/settings" element={<WorkspaceSettings />} />
+        <Route path="/apps" element={<WorkspaceApps />} />
       </WorkspaceLayout>
     );
   }

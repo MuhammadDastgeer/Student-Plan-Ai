@@ -1,15 +1,32 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Sparkles, Calendar, Plus, Bot, MessageSquare, Send, Mic, Trash2, CheckCircle2, AlertCircle, FolderPlus, HelpCircle } from "lucide-react";
+import { useRouter } from "./Router";
 
 export default function WorkspaceAIAssistant() {
-  const [messages, setMessages] = useState<Array<{ sender: "user" | "ai"; text: string; date: string }>>([]);
+  const { navigate } = useRouter();
+  const [messages, setMessages] = useState<Array<{ sender: "user" | "ai"; text: string; date: string }>>(() => {
+    const saved = localStorage.getItem("cozy_ai_chat_history");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.slice(-200);
+        }
+      } catch (e) {}
+    }
+    return [];
+  });
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [showActionDialog, setShowActionDialog] = useState(false);
   const [pendingAction, setPendingAction] = useState<any>(null);
   const [successNotification, setSuccessNotification] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    localStorage.setItem("cozy_ai_chat_history", JSON.stringify(messages.slice(-200)));
+  }, [messages]);
 
   const prompts = [
     "Create a task tomorrow for reviewing code with priority high",
@@ -31,36 +48,97 @@ export default function WorkspaceAIAssistant() {
     const kanbanTasks = localStorage.getItem("workspace_kanban_tasks");
     const notes = localStorage.getItem("workspace_notes");
     const whiteboards = localStorage.getItem("workspace_whiteboards_list");
+    const whiteboardData = localStorage.getItem("workspace_whiteboards_data");
     const spaces = localStorage.getItem("workspace_spaces");
 
-    let context = "CURRENT WORKSPACE STATE:\n";
+    let context = "CURRENT WORKSPACE STATE & DETAILED RECORDS:\n\n";
     
+    context += "--- ACTIVE NOTES ---\n";
     try {
       const parsedNotes = notes ? JSON.parse(notes) : [];
       const active = parsedNotes.filter((n: any) => !n.isDeleted);
-      context += `- Notes: ${active.length} active notes. Titles: ${active.map((n: any) => n.title).join(", ") || "None"}\n`;
-    } catch (e) {}
+      if (active.length > 0) {
+        active.forEach((n: any) => {
+          context += `- Note ID: "${n.id}", Title: "${n.title}", Content: "${n.content ? n.content.substring(0, 150) + '...' : ''}"\n`;
+        });
+      } else {
+        context += "No notes exist.\n";
+      }
+    } catch (e) {
+      context += "Error reading notes.\n";
+    }
 
+    context += "\n--- CALENDAR EVENTS ---\n";
     try {
       const parsedCal = calendar ? JSON.parse(calendar) : [];
-      context += `- Calendar Hub: ${parsedCal.length} items. Event titles: ${parsedCal.map((c: any) => `${c.title} (on ${c.dateStr})`).join(", ") || "None"}\n`;
-    } catch (e) {}
+      if (parsedCal.length > 0) {
+        parsedCal.forEach((c: any) => {
+          context += `- Event ID: "${c.id}", Title: "${c.title}", Date: "${c.dateStr}", Time: "${c.time || '10:00'}", Color: "${c.color || 'blue'}", Status: "${c.status || 'Active'}"\n`;
+        });
+      } else {
+        context += "No calendar events exist.\n";
+      }
+    } catch (e) {
+      context += "Error reading calendar events.\n";
+    }
 
+    context += "\n--- KANBAN BOARDS, COLUMNS & TASKS ---\n";
     try {
       const parsedBoards = boards ? JSON.parse(boards) : [];
+      const parsedColumns = columns ? JSON.parse(columns) : [];
       const parsedTasks = kanbanTasks ? JSON.parse(kanbanTasks) : [];
-      context += `- Kanban Boards: ${parsedBoards.length} boards. Board titles: ${parsedBoards.map((b: any) => b.title).join(", ") || "None"}. Total Kanban Tasks: ${parsedTasks.length}.\n`;
-    } catch (e) {}
+      
+      if (parsedBoards.length > 0) {
+        parsedBoards.forEach((b: any) => {
+          context += `Board ID: "${b.id}", Title: "${b.title}"\n`;
+          const boardCols = parsedColumns.filter((c: any) => c.boardId === b.id);
+          boardCols.forEach((col: any) => {
+            context += `  Column ID: "${col.id}", Title: "${col.title}"\n`;
+            const colTasks = parsedTasks.filter((t: any) => t.columnId === col.id);
+            colTasks.forEach((t: any) => {
+              context += `    - Task ID: "${t.id}", Title: "${t.title}", Date: "${t.date}", Priority: "${t.priority}", Desc: "${t.description || ''}"\n`;
+            });
+          });
+        });
+      } else {
+        context += "No Kanban boards exist.\n";
+      }
+    } catch (e) {
+      context += "Error reading Kanban boards.\n";
+    }
 
+    context += "\n--- WHITEBOARDS & ELEMENTS ---\n";
     try {
       const parsedWB = whiteboards ? JSON.parse(whiteboards) : [];
-      context += `- Whiteboards: ${parsedWB.length} boards. Titles: ${parsedWB.map((w: any) => w.title).join(", ") || "None"}\n`;
-    } catch (e) {}
+      const parsedWBData = whiteboardData ? JSON.parse(whiteboardData) : {};
+      if (parsedWB.length > 0) {
+        parsedWB.forEach((w: any) => {
+          context += `Whiteboard ID: "${w.id}", Title: "${w.title}"\n`;
+          const elements = parsedWBData[w.id] || [];
+          elements.forEach((el: any) => {
+            context += `  - Element ID: "${el.id}", Type: "${el.type}", Text: "${el.text || ''}", Color: "${el.color || ''}"\n`;
+          });
+        });
+      } else {
+        context += "No whiteboards exist.\n";
+      }
+    } catch (e) {
+      context += "Error reading whiteboards.\n";
+    }
 
+    context += "\n--- SPACES & PAGES ---\n";
     try {
       const parsedSpaces = spaces ? JSON.parse(spaces) : [];
-      context += `- Spaces/Pages: ${parsedSpaces.length} folders/pages. Names: ${parsedSpaces.map((s: any) => s.name).join(", ") || "None"}\n`;
-    } catch (e) {}
+      if (parsedSpaces.length > 0) {
+        parsedSpaces.forEach((s: any) => {
+          context += `- Space ID: "${s.id}", Name: "${s.name}", Description: "${s.desc || ''}", ThemeColor: "${s.themeColor || 'purple'}"\n`;
+        });
+      } else {
+        context += "No spaces exist.\n";
+      }
+    } catch (e) {
+      context += "Error reading spaces.\n";
+    }
 
     return context;
   };
@@ -74,12 +152,16 @@ export default function WorkspaceAIAssistant() {
       date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
-    setMessages((prev) => [...prev, userMsg]);
+    // Update state and ensure max 200 messages
+    setMessages((prev) => [...prev, userMsg].slice(-200));
     setInputText("");
     setIsTyping(true);
 
     try {
       const context = getWorkspaceContext();
+
+      // Pass past messages as history (max 199 messages, leaving room for the current prompt)
+      const historyPayload = messages.slice(-199);
 
       const response = await fetch("/api/notes/ai", {
         method: "POST",
@@ -89,7 +171,8 @@ export default function WorkspaceAIAssistant() {
         body: JSON.stringify({
           prompt: text,
           context: context,
-          action: "workspace"
+          action: "workspace",
+          history: historyPayload
         })
       });
 
@@ -107,7 +190,7 @@ export default function WorkspaceAIAssistant() {
           text: aiResponseText,
           date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }
-      ]);
+      ].slice(-200));
 
       // Detect and parse the action if present
       const actionRegex = /```(?:workspace-action|json)\s*([\s\S]*?)```/i;
@@ -311,6 +394,186 @@ export default function WorkspaceAIAssistant() {
         setSuccessNotification(`Successfully created Space "${newSpace.name}"!`);
       }
 
+      else if (type === "edit_kanban_task") {
+        const savedTasks = localStorage.getItem("workspace_kanban_tasks");
+        let tasks = savedTasks ? JSON.parse(savedTasks) : [];
+        const taskToEdit = tasks.find((t: any) => t.id === pendingAction.taskId || t.title.toLowerCase().includes((pendingAction.taskId || "").toLowerCase()));
+        if (taskToEdit) {
+          if (pendingAction.title !== undefined) taskToEdit.title = pendingAction.title;
+          if (pendingAction.priority !== undefined) taskToEdit.priority = pendingAction.priority;
+          if (pendingAction.description !== undefined) taskToEdit.description = pendingAction.description;
+          
+          if (pendingAction.columnTitle) {
+            const savedColumns = localStorage.getItem("workspace_kanban_columns");
+            let columns = savedColumns ? JSON.parse(savedColumns) : [];
+            const boardColumns = columns.filter((c: any) => c.boardId === taskToEdit.boardId);
+            const col = boardColumns.find((c: any) => c.title.toLowerCase().includes(pendingAction.columnTitle.toLowerCase()));
+            if (col) {
+              taskToEdit.columnId = col.id;
+            }
+          }
+
+          localStorage.setItem("workspace_kanban_tasks", JSON.stringify(tasks));
+          setSuccessNotification(`Successfully updated Task "${taskToEdit.title}"!`);
+        } else {
+          setSuccessNotification(`Could not find specified task to edit.`);
+        }
+      }
+
+      else if (type === "delete_kanban_task") {
+        const savedTasks = localStorage.getItem("workspace_kanban_tasks");
+        let tasks = savedTasks ? JSON.parse(savedTasks) : [];
+        const initialLen = tasks.length;
+        tasks = tasks.filter((t: any) => t.id !== pendingAction.taskId && !t.title.toLowerCase().includes((pendingAction.taskId || "").toLowerCase()));
+        localStorage.setItem("workspace_kanban_tasks", JSON.stringify(tasks));
+        if (tasks.length < initialLen) {
+          setSuccessNotification(`Successfully deleted Task from your Kanban board!`);
+        } else {
+          setSuccessNotification(`Task to delete was not found.`);
+        }
+      }
+
+      else if (type === "edit_calendar_event") {
+        const savedCal = localStorage.getItem("workspace_calendar_tasks");
+        let calTasks = savedCal ? JSON.parse(savedCal) : [];
+        const eventToEdit = calTasks.find((c: any) => c.id === pendingAction.eventId || c.title.toLowerCase().includes((pendingAction.eventId || "").toLowerCase()));
+        if (eventToEdit) {
+          if (pendingAction.title !== undefined) eventToEdit.title = pendingAction.title;
+          if (pendingAction.dateStr !== undefined) eventToEdit.dateStr = pendingAction.dateStr;
+          if (pendingAction.time !== undefined) eventToEdit.time = pendingAction.time;
+          if (pendingAction.color !== undefined) eventToEdit.color = pendingAction.color;
+          localStorage.setItem("workspace_calendar_tasks", JSON.stringify(calTasks));
+          setSuccessNotification(`Successfully updated Event "${eventToEdit.title}"!`);
+        } else {
+          setSuccessNotification(`Could not find specified calendar event to edit.`);
+        }
+      }
+
+      else if (type === "delete_calendar_event") {
+        const savedCal = localStorage.getItem("workspace_calendar_tasks");
+        let calTasks = savedCal ? JSON.parse(savedCal) : [];
+        const initialLen = calTasks.length;
+        calTasks = calTasks.filter((c: any) => c.id !== pendingAction.eventId && !c.title.toLowerCase().includes((pendingAction.eventId || "").toLowerCase()));
+        localStorage.setItem("workspace_calendar_tasks", JSON.stringify(calTasks));
+        if (calTasks.length < initialLen) {
+          setSuccessNotification(`Successfully deleted Event from Calendar!`);
+        } else {
+          setSuccessNotification(`Event to delete was not found.`);
+        }
+      }
+
+      else if (type === "edit_note") {
+        const savedNotes = localStorage.getItem("workspace_notes");
+        let notes = savedNotes ? JSON.parse(savedNotes) : [];
+        const noteToEdit = notes.find((n: any) => n.id === pendingAction.noteId || n.title.toLowerCase().includes((pendingAction.noteId || "").toLowerCase()));
+        if (noteToEdit) {
+          if (pendingAction.title !== undefined) noteToEdit.title = pendingAction.title;
+          if (pendingAction.content !== undefined) {
+            noteToEdit.content = pendingAction.content;
+            noteToEdit.wordCount = pendingAction.content.split(/\s+/).length;
+          }
+          noteToEdit.updatedAt = new Date().toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+          localStorage.setItem("workspace_notes", JSON.stringify(notes));
+          setSuccessNotification(`Successfully updated Note "${noteToEdit.title}"!`);
+        } else {
+          setSuccessNotification(`Could not find the specified note to edit.`);
+        }
+      }
+
+      else if (type === "delete_note") {
+        const savedNotes = localStorage.getItem("workspace_notes");
+        let notes = savedNotes ? JSON.parse(savedNotes) : [];
+        const noteToDelete = notes.find((n: any) => n.id === pendingAction.noteId || n.title.toLowerCase().includes((pendingAction.noteId || "").toLowerCase()));
+        if (noteToDelete) {
+          noteToDelete.isDeleted = true;
+          localStorage.setItem("workspace_notes", JSON.stringify(notes));
+          setSuccessNotification(`Successfully moved Note "${noteToDelete.title}" to Trash!`);
+        } else {
+          setSuccessNotification(`Note to delete was not found.`);
+        }
+      }
+
+      else if (type === "edit_whiteboard_element") {
+        const savedWBData = localStorage.getItem("workspace_whiteboards_data");
+        let wbData = savedWBData ? JSON.parse(savedWBData) : {};
+        let found = false;
+        
+        Object.keys(wbData).forEach((boardId) => {
+          const elements = wbData[boardId] || [];
+          const elToEdit = elements.find((e: any) => e.id === pendingAction.elementId || (e.text || "").toLowerCase().includes((pendingAction.elementId || "").toLowerCase()));
+          if (elToEdit) {
+            if (pendingAction.text !== undefined) elToEdit.text = pendingAction.text;
+            if (pendingAction.color !== undefined) elToEdit.color = pendingAction.color;
+            found = true;
+          }
+        });
+
+        if (found) {
+          localStorage.setItem("workspace_whiteboards_data", JSON.stringify(wbData));
+          setSuccessNotification(`Successfully updated Whiteboard sticky note!`);
+        } else {
+          setSuccessNotification(`Whiteboard element to edit was not found.`);
+        }
+      }
+
+      else if (type === "delete_whiteboard_element") {
+        const savedWBData = localStorage.getItem("workspace_whiteboards_data");
+        let wbData = savedWBData ? JSON.parse(savedWBData) : {};
+        let deletedCount = 0;
+
+        Object.keys(wbData).forEach((boardId) => {
+          const initialLen = wbData[boardId]?.length || 0;
+          wbData[boardId] = (wbData[boardId] || []).filter((e: any) => e.id !== pendingAction.elementId && !(e.text || "").toLowerCase().includes((pendingAction.elementId || "").toLowerCase()));
+          deletedCount += (initialLen - wbData[boardId].length);
+        });
+
+        if (deletedCount > 0) {
+          localStorage.setItem("workspace_whiteboards_data", JSON.stringify(wbData));
+          setSuccessNotification(`Successfully deleted element from Whiteboard!`);
+        } else {
+          setSuccessNotification(`Whiteboard element to delete was not found.`);
+        }
+      }
+
+      else if (type === "edit_space") {
+        const savedSpaces = localStorage.getItem("workspace_spaces");
+        let spaces = savedSpaces ? JSON.parse(savedSpaces) : [];
+        const spaceToEdit = spaces.find((s: any) => s.id === pendingAction.spaceId || s.name.toLowerCase().includes((pendingAction.spaceId || "").toLowerCase()));
+        if (spaceToEdit) {
+          if (pendingAction.name !== undefined) spaceToEdit.name = pendingAction.name;
+          if (pendingAction.desc !== undefined) spaceToEdit.desc = pendingAction.desc;
+          if (pendingAction.themeColor !== undefined) spaceToEdit.themeColor = pendingAction.themeColor;
+          spaceToEdit.updatedAt = "Just now";
+          localStorage.setItem("workspace_spaces", JSON.stringify(spaces));
+          setSuccessNotification(`Successfully updated Space "${spaceToEdit.name}"!`);
+        } else {
+          setSuccessNotification(`Could not find specify Space to edit.`);
+        }
+      }
+
+      else if (type === "delete_space") {
+        const savedSpaces = localStorage.getItem("workspace_spaces");
+        let spaces = savedSpaces ? JSON.parse(savedSpaces) : [];
+        const initialLen = spaces.length;
+        spaces = spaces.filter((s: any) => s.id !== pendingAction.spaceId && !s.name.toLowerCase().includes((pendingAction.spaceId || "").toLowerCase()));
+        localStorage.setItem("workspace_spaces", JSON.stringify(spaces));
+        if (spaces.length < initialLen) {
+          setSuccessNotification(`Successfully deleted Space folder!`);
+        } else {
+          setSuccessNotification(`Space folder to delete was not found.`);
+        }
+      }
+
+      else if (type === "switch_tab") {
+        const dest = pendingAction.tab;
+        if (dest) {
+          navigate(dest);
+          setSuccessNotification(`Successfully switched tab to ${dest}!`);
+        } else {
+          setSuccessNotification(`Invalid tab navigation destination.`);
+        }
+      }
+
       setShowActionDialog(false);
       setPendingAction(null);
 
@@ -390,14 +653,29 @@ export default function WorkspaceAIAssistant() {
       </AnimatePresence>
 
       {/* Top Page Title */}
-      <div className="text-left mb-6 pb-4 border-b border-[#F0EBE5]/60 flex items-center gap-2.5">
-        <div className="p-2 bg-[#FAF2EC] text-[#c67f43] rounded-xl">
-          <Bot className="w-5 h-5" />
+      <div className="flex justify-between items-center mb-6 pb-4 border-b border-[#F0EBE5]/60">
+        <div className="flex items-center gap-2.5 text-left">
+          <div className="p-2 bg-[#FAF2EC] text-[#c67f43] rounded-xl">
+            <Bot className="w-5 h-5" />
+          </div>
+          <div>
+            <h1 className="font-sans font-bold text-lg text-[#221C18]">AI Assistant (GPT Powered)</h1>
+            <p className="text-xs text-stone-500 font-medium">Ask questions, plan items, and build workspaces</p>
+          </div>
         </div>
-        <div>
-          <h1 className="font-sans font-bold text-lg text-[#221C18]">AI Assistant (GPT Powered)</h1>
-          <p className="text-xs text-stone-500 font-medium">Ask questions, plan items, and build workspaces</p>
-        </div>
+        {messages.length > 0 && (
+          <button
+            onClick={() => {
+              if (confirm("Are you sure you want to clear your chat memory?")) {
+                setMessages([]);
+                localStorage.removeItem("cozy_ai_chat_history");
+              }
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 border border-[#EFECE6] bg-white hover:bg-stone-50 text-stone-500 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-3xs"
+          >
+            <Trash2 className="w-3.5 h-3.5 text-stone-400" /> Clear Chat History
+          </button>
+        )}
       </div>
 
       {/* Main Interactive Dialogue Sandbox */}

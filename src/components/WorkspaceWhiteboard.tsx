@@ -105,10 +105,7 @@ export default function WorkspaceWhiteboard() {
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       } catch (e) {}
     }
-    return [
-      { id: "planning", title: "Product Roadmap Flowchart", sub: "Architecture & User actions" },
-      { id: "untitled", title: "System Architecture Sandbox", sub: "Design playground" }
-    ];
+    return [];
   });
 
   const [selectedBoard, setSelectedBoard] = useState<string>(() => {
@@ -117,7 +114,7 @@ export default function WorkspaceWhiteboard() {
       localStorage.removeItem("selected_board_id");
       return savedSelected;
     }
-    return boards[0]?.id || "planning";
+    return boards[0]?.id || "";
   });
 
   // --- Board Data Elements loaded from LocalStorage ---
@@ -128,96 +125,7 @@ export default function WorkspaceWhiteboard() {
         return JSON.parse(saved);
       } catch (e) {}
     }
-    return {
-      "planning": [
-        { 
-          id: "e1", 
-          type: "circle", 
-          x: 100, 
-          y: 120, 
-          width: 110, 
-          height: 110, 
-          text: "Start action", 
-          color: "#E6FFFA", 
-          borderColor: "#14B8A6", 
-          borderWidth: 2, 
-          borderStyle: "solid", 
-          textColor: "#115E59", 
-          fontSize: 13, 
-          fontWeight: "bold" 
-        },
-        { 
-          id: "e2", 
-          type: "box", 
-          x: 290, 
-          y: 125, 
-          width: 170, 
-          height: 100, 
-          text: "Analyze User Request with smart systems", 
-          color: "#E6F4FF", 
-          borderColor: "#3B82F6", 
-          borderWidth: 2, 
-          borderStyle: "solid", 
-          textColor: "#1E3A8A", 
-          fontSize: 12, 
-          fontWeight: "bold" 
-        },
-        {
-          id: "e3",
-          type: "arrow",
-          x: 0, y: 0, width: 0, height: 0, text: "",
-          color: "#475569", borderWidth: 2, borderStyle: "solid",
-          points: [{ x: 212, y: 175 }, { x: 288, y: 175 }]
-        },
-        { 
-          id: "e4", 
-          type: "diamond", 
-          x: 540, 
-          y: 115, 
-          width: 120, 
-          height: 120, 
-          text: "Are criteria valid?", 
-          color: "#FFFEE5", 
-          borderColor: "#EAB308", 
-          borderWidth: 2, 
-          borderStyle: "dashed", 
-          textColor: "#713F12", 
-          fontSize: 12, 
-          fontWeight: "normal" 
-        },
-        {
-          id: "e5",
-          type: "arrow",
-          x: 0, y: 0, width: 0, height: 0, text: "",
-          color: "#475569", borderWidth: 2, borderStyle: "solid",
-          points: [{ x: 462, y: 175 }, { x: 538, y: 175 }]
-        },
-        { 
-          id: "e6", 
-          type: "sticky", 
-          x: 740, 
-          y: 105, 
-          width: 140, 
-          height: 140, 
-          text: "Automation Success Output. Deliver dynamic files inside safe local frames.", 
-          color: "#F5F3FF", 
-          borderColor: "#C084FC", 
-          borderWidth: 1, 
-          borderStyle: "solid", 
-          textColor: "#581C87", 
-          fontSize: 11, 
-          fontWeight: "normal" 
-        },
-        {
-          id: "e7",
-          type: "arrow",
-          x: 0, y: 0, width: 0, height: 0, text: "",
-          color: "#10B981", borderWidth: 2, borderStyle: "solid",
-          points: [{ x: 662, y: 175 }, { x: 738, y: 175 }]
-        },
-      ],
-      "untitled": []
-    };
+    return {};
   });
 
   const elements = elementsMap[selectedBoard] || [];

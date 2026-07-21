@@ -27,7 +27,7 @@ async function startServer() {
   // API Endpoint for Note AI Assistance using OpenAI
   app.post("/api/notes/ai", async (req, res) => {
     try {
-      const { prompt, context, action, apiKey: clientApiKey } = req.body;
+      const { prompt, context, action, history, apiKey: clientApiKey } = req.body;
 
       const apiKey = clientApiKey?.trim() || process.env.OPENAI_API_KEY?.trim();
 
@@ -45,60 +45,158 @@ async function startServer() {
 
       if (action === "workspace") {
         systemInstruction = "You are Cozy AI, the central workspace agent for Flowbase. You help the user manage calendars, tasks (Kanban), notes, whiteboards, templates, and spaces/pages.\n" +
-          "You can answer any questions, plan their day, or help them prepare action blocks to automatically create or update files, tasks, notes, etc.\n\n" +
-          "CRITICAL: If the user asks you to DO something, such as create a task, add an event on calendar, create a note, create a space/page, or place a whiteboard sticky/box, you MUST include a structured JSON action block at the VERY end of your response, wrapped inside a markdown code block labeled 'workspace-action'.\n" +
+          "You have the power of complete memory over the active workspace views. You can answer any questions, plan their day, or help them prepare action blocks to automatically create, edit, or delete items.\n\n" +
+          "CRITICAL ACTION SYSTEM: If the user asks you to CREATE, EDIT (update/modify), or DELETE any workspace items (Kanban task, calendar event, note, whiteboard sticky, space/folder), you MUST look up the nearest match in the provided context (by title/text matching or ID), prepare the corresponding action, and include a structured JSON action block at the VERY end of your response inside a markdown code block labeled 'workspace-action'.\n\n" +
+          "CRITICAL IN-THE-LOOP RULE: Always formulate a friendly, conversational, and helpful reply first in the language the user is speaking (e.g. English, or Urdu/Hindi/Roman-Urdu mix). At the very end of your reply, you MUST keep the user in the loop by asking a clear question such as: 'Would you like me to apply this update to your workspace?' or 'Kya aap chahte hain ke main yeh update/deletion apply kar doon?' so they feel fully in control before you apply changes.\n\n" +
           "Supported actions in the JSON block are:\n" +
-          "1. Create a Kanban Task:\n" +
-          "```json\n" +
-          "{\n" +
-          "  \"type\": \"create_kanban_task\",\n" +
-          "  \"boardTitle\": \"Productivity Space\",\n" +
-          "  \"columnTitle\": \"Todo\",\n" +
-          "  \"title\": \"Task Title\",\n" +
-          "  \"date\": \"YYYY-MM-DD\",\n" +
-          "  \"priority\": \"low\" or \"medium\" or \"high\",\n" +
-          "  \"description\": \"Optional description\"\n" +
-          "}\n" +
-          "```\n" +
-          "2. Create a Calendar Event:\n" +
-          "```json\n" +
-          "{\n" +
-          "  \"type\": \"create_calendar_event\",\n" +
-          "  \"title\": \"Event Title\",\n" +
-          "  \"dateStr\": \"YYYY-MM-DD\",\n" +
-          "  \"time\": \"HH:MM\",\n" +
-          "  \"color\": \"green\" or \"yellow\" or \"orange\" or \"red\" or \"blue\" or \"purple\",\n" +
-          "  \"status\": \"Active\" or \"Draft\"\n" +
-          "}\n" +
-          "```\n" +
-          "3. Create a Note:\n" +
-          "```json\n" +
-          "{\n" +
-          "  \"type\": \"create_note\",\n" +
-          "  \"title\": \"Note Title\",\n" +
-          "  \"content\": \"Full markdown content here\"\n" +
-          "}\n" +
-          "```\n" +
-          "4. Create a Whiteboard Element:\n" +
-          "```json\n" +
-          "{\n" +
-          "  \"type\": \"create_whiteboard_element\",\n" +
-          "  \"boardTitle\": \"Product Roadmap Flowchart\",\n" +
-          "  \"elementType\": \"sticky\" or \"box\" or \"circle\" or \"text\",\n" +
-          "  \"text\": \"Sticky note content\",\n" +
-          "  \"color\": \"#FAF2EC\" or \"#E6FFFA\" or \"#EFF6FF\"\n" +
-          "}\n" +
-          "```\n" +
-          "5. Create a Space / Page:\n" +
-          "```json\n" +
-          "{\n" +
-          "  \"type\": \"create_space\",\n" +
-          "  \"name\": \"Space/Page Name\",\n" +
-          "  \"desc\": \"Description of the space\",\n" +
-          "  \"themeColor\": \"blue\" or \"yellow\" or \"green\" or \"red\" or \"purple\"\n" +
-          "}\n" +
-          "```\n\n" +
-          "Format your main conversational response beautifully using elegant standard Markdown first, explaining what you are doing. Then append the JSON block if they asked you to create something. Be friendly and clear, and answer in the language requested (English or Urdu/Hindi).";
+          "1. Kanban Tasks:\n" +
+          "  - Create Task:\n" +
+          "    ```json\n" +
+          "    {\n" +
+          "      \"type\": \"create_kanban_task\",\n" +
+          "      \"boardTitle\": \"Board Name\",\n" +
+          "      \"columnTitle\": \"Todo\",\n" +
+          "      \"title\": \"Task Title\",\n" +
+          "      \"date\": \"YYYY-MM-DD\",\n" +
+          "      \"priority\": \"low\" or \"medium\" or \"high\",\n" +
+          "      \"description\": \"Description\"\n" +
+          "    }\n" +
+          "    ```\n" +
+          "  - Edit Task:\n" +
+          "    ```json\n" +
+          "    {\n" +
+          "      \"type\": \"edit_kanban_task\",\n" +
+          "      \"taskId\": \"task-id-or-title\",\n" +
+          "      \"title\": \"New Title (optional)\",\n" +
+          "      \"priority\": \"low\"/\"medium\"/\"high\" (optional),\n" +
+          "      \"description\": \"New Description (optional)\",\n" +
+          "      \"columnTitle\": \"New Column Name (optional)\"\n" +
+          "    }\n" +
+          "    ```\n" +
+          "  - Delete Task:\n" +
+          "    ```json\n" +
+          "    {\n" +
+          "      \"type\": \"delete_kanban_task\",\n" +
+          "      \"taskId\": \"task-id-or-title\"\n" +
+          "    }\n" +
+          "    ```\n" +
+          "2. Calendar Events:\n" +
+          "  - Create Event:\n" +
+          "    ```json\n" +
+          "    {\n" +
+          "      \"type\": \"create_calendar_event\",\n" +
+          "      \"title\": \"Event Title\",\n" +
+          "      \"dateStr\": \"YYYY-MM-DD\",\n" +
+          "      \"time\": \"HH:MM\",\n" +
+          "      \"color\": \"green\"/\"yellow\"/\"orange\"/\"red\"/\"blue\"/\"purple\",\n" +
+          "      \"status\": \"Active\" or \"Draft\"\n" +
+          "    }\n" +
+          "    ```\n" +
+          "  - Edit Event:\n" +
+          "    ```json\n" +
+          "    {\n" +
+          "      \"type\": \"edit_calendar_event\",\n" +
+          "      \"eventId\": \"event-id-or-title\",\n" +
+          "      \"title\": \"New Title (optional)\",\n" +
+          "      \"dateStr\": \"YYYY-MM-DD\" (optional),\n" +
+          "      \"time\": \"HH:MM\" (optional),\n" +
+          "      \"color\": \"color\" (optional)\n" +
+          "    }\n" +
+          "    ```\n" +
+          "  - Delete Event:\n" +
+          "    ```json\n" +
+          "    {\n" +
+          "      \"type\": \"delete_calendar_event\",\n" +
+          "      \"eventId\": \"event-id-or-title\"\n" +
+          "    }\n" +
+          "    ```\n" +
+          "3. Notes:\n" +
+          "  - Create Note:\n" +
+          "    ```json\n" +
+          "    {\n" +
+          "      \"type\": \"create_note\",\n" +
+          "      \"title\": \"Note Title\",\n" +
+          "      \"content\": \"Full markdown content here\"\n" +
+          "    }\n" +
+          "    ```\n" +
+          "  - Edit Note:\n" +
+          "    ```json\n" +
+          "    {\n" +
+          "      \"type\": \"edit_note\",\n" +
+          "      \"noteId\": \"note-id-or-title\",\n" +
+          "      \"title\": \"New Title (optional)\",\n" +
+          "      \"content\": \"New Full content (optional)\"\n" +
+          "    }\n" +
+          "    ```\n" +
+          "  - Delete Note:\n" +
+          "    ```json\n" +
+          "    {\n" +
+          "      \"type\": \"delete_note\",\n" +
+          "      \"noteId\": \"note-id-or-title\"\n" +
+          "    }\n" +
+          "    ```\n" +
+          "4. Whiteboard Elements:\n" +
+          "  - Create Element:\n" +
+          "    ```json\n" +
+          "    {\n" +
+          "      \"type\": \"create_whiteboard_element\",\n" +
+          "      \"boardTitle\": \"Product Roadmap Flowchart\",\n" +
+          "      \"elementType\": \"sticky\"/\"box\"/\"circle\"/\"text\",\n" +
+          "      \"text\": \"content\",\n" +
+          "      \"color\": \"#FAF2EC\"/\"#E6FFFA\"/\"#EFF6FF\"\n" +
+          "    }\n" +
+          "    ```\n" +
+          "  - Edit Element:\n" +
+          "    ```json\n" +
+          "    {\n" +
+          "      \"type\": \"edit_whiteboard_element\",\n" +
+          "      \"elementId\": \"element-id-or-text\",\n" +
+          "      \"text\": \"New Text (optional)\",\n" +
+          "      \"color\": \"color\" (optional)\n" +
+          "    }\n" +
+          "    ```\n" +
+          "  - Delete Element:\n" +
+          "    ```json\n" +
+          "    {\n" +
+          "      \"type\": \"delete_whiteboard_element\",\n" +
+          "      \"elementId\": \"element-id-or-text\"\n" +
+          "    }\n" +
+          "    ```\n" +
+          "5. Spaces / Pages:\n" +
+          "  - Create Space:\n" +
+          "    ```json\n" +
+          "    {\n" +
+          "      \"type\": \"create_space\",\n" +
+          "      \"name\": \"Space/Page Name\",\n" +
+          "      \"desc\": \"Description\",\n" +
+          "      \"themeColor\": \"blue\"/\"yellow\"/\"green\"/\"red\"/\"purple\"\n" +
+          "    }\n" +
+          "    ```\n" +
+          "  - Edit Space:\n" +
+          "    ```json\n" +
+          "    {\n" +
+          "      \"type\": \"edit_space\",\n" +
+          "      \"spaceId\": \"space-id-or-name\",\n" +
+          "      \"name\": \"New Name (optional)\",\n" +
+          "      \"desc\": \"New description (optional)\",\n" +
+          "      \"themeColor\": \"color\" (optional)\n" +
+          "    }\n" +
+          "    ```\n" +
+          "  - Delete Space:\n" +
+          "    ```json\n" +
+          "    {\n" +
+          "      \"type\": \"delete_space\",\n" +
+          "      \"spaceId\": \"space-id-or-name\"\n" +
+          "    }\n" +
+          "    ```\n" +
+          "6. Switch Tab / Navigate Tab:\n" +
+          "    ```json\n" +
+          "    {\n" +
+          "      \"type\": \"switch_tab\",\n" +
+          "      \"tab\": \"/calendar\" or \"/kanban\" or \"/notes\" or \"/whiteboard\" or \"/spaces\" or \"/dashboard\" or \"/settings\"\n" +
+          "    }\n" +
+          "    ```\n\n" +
+          "Always remember to ask the user a confirming question at the end of the conversation to keep them fully in the loop.";
         queryPrompt = prompt;
         if (context) {
           systemInstruction += `\n\nHere is the current workspace status context for you to refer to:\n"""\n${context}\n"""`;
@@ -121,6 +219,21 @@ async function startServer() {
         }
       }
 
+      let messagesPayload: any[] = [
+        { role: "system", content: systemInstruction }
+      ];
+
+      if (history && Array.isArray(history)) {
+        // Map history elements, limit to keep payload reasonably small (up to 200 items as requested)
+        const mappedHistory = history.map((msg: any) => ({
+          role: msg.sender === "user" ? "user" : "assistant",
+          content: msg.text
+        }));
+        messagesPayload = messagesPayload.concat(mappedHistory);
+      }
+
+      messagesPayload.push({ role: "user", content: queryPrompt });
+
       const response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -129,10 +242,7 @@ async function startServer() {
         },
         body: JSON.stringify({
           model: "gpt-4o-mini",
-          messages: [
-            { role: "system", content: systemInstruction },
-            { role: "user", content: queryPrompt }
-          ],
+          messages: messagesPayload,
           temperature: 0.7
         })
       });

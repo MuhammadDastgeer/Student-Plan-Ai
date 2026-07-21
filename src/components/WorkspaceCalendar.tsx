@@ -48,32 +48,7 @@ export default function WorkspaceCalendar() {
         console.error("Failed to parse calendar tasks", e);
       }
     }
-    return [
-      {
-        id: "1",
-        dateStr: todayStr,
-        title: "Workspace Sync & Demo",
-        time: "10:30",
-        color: "blue",
-        status: "Active"
-      },
-      {
-        id: "2",
-        dateStr: formatDateStr(new Date(Date.now() + 24 * 60 * 60 * 1000)),
-        title: "Submit Code Updates",
-        time: "15:00",
-        color: "green",
-        status: "Active"
-      },
-      {
-        id: "3",
-        dateStr: todayStr,
-        title: "Draft component review checklist",
-        time: "17:00",
-        color: "purple",
-        status: "Draft"
-      }
-    ];
+    return [];
   });
 
   React.useEffect(() => {
